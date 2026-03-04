@@ -1,9 +1,9 @@
-import { ALL_CONDITIONS, Condition } from './model'
-import * as E from 'fp-ts/Either'
-import { identity, pipe } from 'fp-ts/function'
+import { ALL_CONDITIONS, Condition } from './model.js'
+import * as E from 'fp-ts/lib/Either.js'
+import { identity, pipe } from 'fp-ts/lib/function.js'
 import * as t from 'io-ts'
 import * as td from 'io-ts-types'
-import { NonEmptyStringCodec } from '../../codecs'
+import { NonEmptyStringCodec } from '../../codecs.js'
 
 const isCondition = (input: unknown): input is Condition =>
   typeof input === 'string' && ALL_CONDITIONS.includes(input as Condition)

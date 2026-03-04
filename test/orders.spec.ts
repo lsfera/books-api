@@ -1,11 +1,11 @@
-import { placeOrderHttpHandler } from '../src/routes/orders'
-import { Request, Response } from 'express'
-import { AppError } from '../src/model'
-import { createSandbox, SinonSandbox, SinonStub, assert as verify } from 'sinon'
+import { placeOrderHttpHandler } from '../src/routes/orders/index.js'
+import type { Request, Response } from 'express'
+import type { AppError } from '../src/model.js'
+import type { SinonSandbox, SinonStub } from 'sinon'
+import { createSandbox, assert } from 'sinon'
 import { Types } from 'mongoose'
 import { mockReq, mockRes } from 'sinon-express-mock'
-import * as TE from 'fp-ts/TaskEither'
-import * as model from '../src/routes/orders/model'
+import * as TE from 'fp-ts/lib/TaskEither.js'
 
 describe('record order', () => {
   type RecordOrderRequest = Request<
@@ -16,11 +16,11 @@ describe('record order', () => {
   type RecordOrderResponse = Response<AppError | void>
 
   let sandbox: SinonSandbox
-  let mocked: SinonStub
+  let placeOrderStub: SinonStub
 
   beforeEach(() => {
     sandbox = createSandbox()
-    mocked = sandbox.stub(model, 'placeOrder')
+    placeOrderStub = sandbox.stub()
   })
 
   afterEach(() => {
@@ -32,8 +32,8 @@ describe('record order', () => {
       body: {},
     }) as mockReq.MockReq & RecordOrderRequest
     const res = mockRes() as RecordOrderResponse & mockRes.MockRes
-    await placeOrderHttpHandler(req, res)
-    verify.calledWith(res.status, 403)
+    await placeOrderHttpHandler({ placeOrder: placeOrderStub })(req, res)
+    assert.calledWith(res.status as SinonStub, 403)
   })
 
   it('missing purchaser', async () => {
@@ -44,8 +44,8 @@ describe('record order', () => {
       },
     }) as mockReq.MockReq & RecordOrderRequest
     const res = mockRes() as RecordOrderResponse & mockRes.MockRes
-    await placeOrderHttpHandler(req, res)
-    verify.calledWith(res.status, 403)
+    await placeOrderHttpHandler({ placeOrder: placeOrderStub })(req, res)
+    assert.calledWith(res.status as SinonStub, 403)
   })
 
   it('empty bookIds', async () => {
@@ -56,8 +56,8 @@ describe('record order', () => {
       },
     }) as mockReq.MockReq & RecordOrderRequest
     const res = mockRes() as RecordOrderResponse & mockRes.MockRes
-    await placeOrderHttpHandler(req, res)
-    verify.calledWith(res.status, 403)
+    await placeOrderHttpHandler({ placeOrder: placeOrderStub })(req, res)
+    assert.calledWith(res.status as SinonStub, 403)
   })
 
   it('right payload', async () => {
@@ -71,8 +71,10 @@ describe('record order', () => {
     res.setHeader = (): RecordOrderResponse & mockRes.MockRes => {
       return res
     } // HACK (https://github.com/danawoodman/sinon-express-mock/pull/23)
-    mocked.returns(TE.right<AppError, Types.ObjectId>(new Types.ObjectId(1)))
-    await placeOrderHttpHandler(req, res)
-    verify.calledWith(res.status, 201)
+    placeOrderStub.returns(
+      TE.right<AppError, Types.ObjectId>(new Types.ObjectId()),
+    )
+    await placeOrderHttpHandler({ placeOrder: placeOrderStub })(req, res)
+    assert.calledWith(res.status as SinonStub, 201)
   })
 })

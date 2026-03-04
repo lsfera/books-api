@@ -1,15 +1,16 @@
-import { Request, Response } from 'express'
-import * as TE from 'fp-ts/TaskEither'
-import * as T from 'fp-ts/Task'
-import { pipe } from 'fp-ts/function'
-import { BookCodec } from './codecs'
-import { Book, findBook, findBooks, saveBook, bookFromSchema } from './model'
-import { AppError, flattenValidationErrors } from '../../model'
+import type { Request, Response } from 'express'
+import * as TE from 'fp-ts/lib/TaskEither.js'
+import * as T from 'fp-ts/lib/Task.js'
+import { pipe } from 'fp-ts/lib/function.js'
+import { BookCodec } from './codecs.js'
+import { findBook, findBooks, saveBook, bookFromSchema } from './model.js'
+import type { Book } from './model.js'
+import { flattenValidationErrors } from '../../model.js'
+import type { AppError } from '../../model.js'
 import { context, trace } from '@opentelemetry/api'
-import { Config } from '../../config'
-import { replyToError, getParam } from '../../utils'
-import { ordersCount } from '../orders/model'
-import { deliveriesCount } from '../deliveries/model'
+import { replyToError, getParam } from '../../utils.js'
+import { ordersCount } from '../orders/model.js'
+import { deliveriesCount } from '../deliveries/model.js'
 
 const getBooksHttpHandler = async (
   _: Request<
@@ -79,44 +80,42 @@ const getBookHttpHandler = async (
   )()
 }
 
+type AddBookDeps = {
+  saveBook: typeof saveBook
+}
+
 const addBookHttpHandler =
-  (cfg?: Config) =>
-  async (
-    req: Request<Record<string, never>, AppError | void, unknown>,
-    res: Response<AppError | void>,
-  ): Promise<void> => {
+  (deps: AddBookDeps = { saveBook }) =>
+  async (req: Request, res: Response): Promise<void> => {
     /*
-  #swagger.summary = 'Insert a book.'
-  #swagger.description = 'Insert a book.'
-  #swagger.operationId = 'save_book'
-  #swagger.requestBody = {
-    required: true,
-    content: {
-      "application/json": {
-        schema: {
-          ref: "#/components/schemas/saveBook"
+      #swagger.summary = 'Insert a book.'
+      #swagger.description = 'Insert a book.'
+      #swagger.operationId = 'save_book'
+      #swagger.requestBody = {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              ref: "#/components/schemas/saveBook"
+            }
+          }
         }
       }
-    }
-  }
-  #swagger.responses[201] = {
-    description: "Book added",
-    content: {}
-  }
-*/
+      #swagger.responses[201] = {
+        description: "Book added",
+        content: {}
+      }
+      */
     const span = trace.getSpan(context.active())
     await pipe(
       TE.fromEither(BookCodec.decode(req.body)),
       TE.mapLeft(flattenValidationErrors),
-      TE.chain(saveBook),
+      TE.chain(deps.saveBook),
       TE.fold(replyToError(res, span), (x) =>
         T.of(
           res
             .status(201)
-            .setHeader(
-              'Location',
-              `${cfg?.baseUrl ?? ''}/books/${x._id.toString()}`,
-            )
+            .setHeader('Location', `/books/${x._id.toString()}`)
             .end(),
         ),
       ),

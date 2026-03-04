@@ -1,5 +1,5 @@
-import * as E from 'fp-ts/Either'
-import { identity, pipe } from 'fp-ts/function'
+import * as E from 'fp-ts/lib/Either.js'
+import { identity, pipe } from 'fp-ts/lib/function.js'
 import * as t from 'io-ts'
 import * as td from 'io-ts-types'
 

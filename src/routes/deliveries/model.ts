@@ -1,12 +1,12 @@
-import { DeliveryCodec } from './codecs'
+import { DeliveryCodec } from './codecs.js'
 import * as t from 'io-ts'
 import { InferSchemaType, Types } from 'mongoose'
-import { DeliveryModel, DeliverySchema } from './schema'
-import { pipe } from 'fp-ts/function'
-import * as E from 'fp-ts/Either'
-import * as O from 'fp-ts/Option'
-import * as TE from 'fp-ts/TaskEither'
-import { AppError, genericError, notFoundError } from '../../model'
+import { DeliveryModel, DeliverySchema } from './schema.js'
+import { pipe } from 'fp-ts/lib/function.js'
+import * as E from 'fp-ts/lib/Either.js'
+import * as O from 'fp-ts/lib/Option.js'
+import * as TE from 'fp-ts/lib/TaskEither.js'
+import { AppError, genericError, notFoundError } from '../../model.js'
 
 type Delivery = t.TypeOf<typeof DeliveryCodec>
 

@@ -1,12 +1,13 @@
-import { BookCodec } from './codecs'
+import { BookCodec } from './codecs.js'
 import * as t from 'io-ts'
 import { InferSchemaType, Types } from 'mongoose'
-import { BookModel, BookSchema } from './schema'
-import { pipe } from 'fp-ts/function'
-import * as E from 'fp-ts/Either'
-import * as O from 'fp-ts/Option'
-import * as TE from 'fp-ts/TaskEither'
-import { AppError, genericError, notFoundError } from '../../model'
+import { BookModel, BookSchema } from './schema.js'
+import { pipe } from 'fp-ts/lib/function.js'
+import * as E from 'fp-ts/lib/Either.js'
+import * as O from 'fp-ts/lib/Option.js'
+import * as TE from 'fp-ts/lib/TaskEither.js'
+import type { AppError } from '../../model.js'
+import { genericError, notFoundError } from '../../model.js'
 
 const ALL_CONDITIONS = ['used', 'new', 'like new', 'good'] as const
 type Condition = (typeof ALL_CONDITIONS)[number]

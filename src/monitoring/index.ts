@@ -1,14 +1,14 @@
 import { NodeSDK } from '@opentelemetry/sdk-node'
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics'
-import { Resource } from '@opentelemetry/resources'
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
+import { resourceFromAttributes } from '@opentelemetry/resources'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto'
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-proto'
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http'
 import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express'
-import { getConfig } from '../config'
-import { identity, pipe } from 'fp-ts/function'
-import * as E from 'fp-ts/Either'
+import { getConfig } from '../config.js'
+import { identity, pipe } from 'fp-ts/lib/function.js'
+import * as E from 'fp-ts/lib/Either.js'
 
 const otel = pipe(
   getConfig(process.argv, process.env),
@@ -30,7 +30,7 @@ const otel = pipe(
           new HttpInstrumentation(),
           new ExpressInstrumentation(),
         ],
-        resource: new Resource({
+        resource: resourceFromAttributes({
           [SemanticResourceAttributes.SERVICE_NAME]:
             process.env.npm_package_name,
           [SemanticResourceAttributes.SERVICE_VERSION]:

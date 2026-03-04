@@ -1,21 +1,21 @@
 import express, { NextFunction } from 'express'
 import { Request, Response } from 'express'
-import * as core from 'express-serve-static-core'
+import * as core from 'express'
 import { createMiddleware } from '@promster/express'
 import { createServer as createPrometheusMetricsServer } from '@promster/server'
-import { Config } from 'config'
+import { Config } from 'config.js'
 import {
   getBooksHttpHandler,
   getBookHttpHandler,
   addBookHttpHandler,
   bookAvailabilityHttpHandler,
-} from './routes/books'
-import { placeOrderHttpHandler } from './routes/orders'
-import { recordDeliveryHttpHandler } from './routes/deliveries'
-import { DeliveryModel } from './routes/deliveries/schema'
-import { OrderModel } from './routes/orders/schema'
-import { handler } from './routes/notifications'
-import { registerWebHookHttpHandler } from './routes/webhooks'
+} from './routes/books/index.js'
+import { placeOrderHttpHandler } from './routes/orders/index.js'
+import { recordDeliveryHttpHandler } from './routes/deliveries/index.js'
+import { DeliveryModel } from './routes/deliveries/schema.js'
+import { OrderModel } from './routes/orders/schema.js'
+import { handler } from './routes/notifications/index.js'
+import { registerWebHookHttpHandler } from './routes/webhooks/index.js'
 
 const buildApp = async (cfg: Config): Promise<core.Express> => {
   const app = express()
@@ -34,9 +34,9 @@ const buildApp = async (cfg: Config): Promise<core.Express> => {
   app.get('/books', getBooksHttpHandler)
   app.get('/books/:bookId', getBookHttpHandler)
   app.get('/books/:bookId/availability', bookAvailabilityHttpHandler)
-  app.post('/books', addBookHttpHandler(cfg))
-  app.post('/orders', placeOrderHttpHandler)
-  app.post('/deliveries', recordDeliveryHttpHandler)
+  app.post('/books', addBookHttpHandler())
+  app.post('/orders', placeOrderHttpHandler())
+  app.post('/deliveries', recordDeliveryHttpHandler())
   app.post('/webhooks', registerWebHookHttpHandler)
   DeliveryModel.watch().on('change', handler)
   OrderModel.watch().on('change', handler)

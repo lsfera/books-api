@@ -1,13 +1,13 @@
 import { Types } from 'mongoose'
-import { deliveriesCount } from '../deliveries/model'
-import { ordersCount } from '../orders/model'
-import * as T from 'fp-ts/Task'
-import * as TE from 'fp-ts/TaskEither'
-import * as A from 'fp-ts/Array'
-import * as O from 'fp-ts/Option'
-import { identity, pipe } from 'fp-ts/function'
-import { AppError, genericError } from '../../model'
-import { WebHook, findWebHooks } from '../webhooks/model'
+import { deliveriesCount } from '../deliveries/model.js'
+import { ordersCount } from '../orders/model.js'
+import * as T from 'fp-ts/lib/Task.js'
+import * as TE from 'fp-ts/lib/TaskEither.js'
+import * as A from 'fp-ts/lib/Array.js'
+import * as O from 'fp-ts/lib/Option.js'
+import { identity, pipe } from 'fp-ts/lib/function.js'
+import { AppError, genericError } from '../../model.js'
+import { WebHook, findWebHooks } from '../webhooks/model.js'
 
 type ChangedData<T> = {
   _id: {

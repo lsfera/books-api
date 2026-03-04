@@ -1,9 +1,9 @@
 import { Response } from 'express'
-import * as E from 'fp-ts/Either'
-import * as O from 'fp-ts/Option'
-import * as T from 'fp-ts/Task'
-import { pipe } from 'fp-ts/function'
-import { AppError, ErrorCode } from './model'
+import * as E from 'fp-ts/lib/Either.js'
+import * as O from 'fp-ts/lib/Option.js'
+import * as T from 'fp-ts/lib/Task.js'
+import { pipe } from 'fp-ts/lib/function.js'
+import { AppError, ErrorCode } from './model.js'
 import { Span } from '@opentelemetry/api'
 
 const getParam = (id: string | undefined): E.Either<AppError, string> =>

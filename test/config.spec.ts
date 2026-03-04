@@ -1,7 +1,7 @@
 import * as assert from 'assert'
-import { getConfig } from '../src/config'
-import * as E from 'fp-ts/Either'
-import { pipe } from 'fp-ts/function'
+import { getConfig } from '../src/config.js'
+import * as E from 'fp-ts/lib/Either.js'
+import { pipe } from 'fp-ts/lib/function.js'
 import {
   DEFAULT_APPLICATION_PORT,
   DEFAULT_BASE_URL,
@@ -9,7 +9,7 @@ import {
   DEFAULT_METRICS_PORT,
   DEFAULT_OTLP_EXPORTER_HOST,
   DEFAULT_OTLP_EXPORTER_PORT,
-} from '../src/codecs'
+} from '../src/codecs.js'
 
 describe('parsing configuration', () => {
   it('empty values return default config', () => {

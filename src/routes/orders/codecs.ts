@@ -1,6 +1,6 @@
 import * as t from 'io-ts'
 import * as td from 'io-ts-types'
-import { NonEmptyStringCodec } from '../../codecs'
+import { NonEmptyStringCodec } from '../../codecs.js'
 
 const OrderCodec = t.type({
   purchaser: td.withMessage(

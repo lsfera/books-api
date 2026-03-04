@@ -1,6 +1,6 @@
 import * as t from 'io-ts'
 import * as td from 'io-ts-types'
-import { NonEmptyStringCodec } from '../../codecs'
+import { NonEmptyStringCodec } from '../../codecs.js'
 
 const DeliveryCodec = t.type({
   supplier: td.withMessage(

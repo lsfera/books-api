@@ -1,6 +1,6 @@
-import { Timestamp } from 'model'
+import { Timestamp } from 'model.js'
 import { Schema, model } from 'mongoose'
-import { Order } from './model'
+import { Order } from './model.js'
 
 const OrderSchema = new Schema<Order & Timestamp>({
   bookIds: [

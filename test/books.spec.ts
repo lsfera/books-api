@@ -1,14 +1,18 @@
-import { addBookHttpHandler, getBooksHttpHandler } from '../src/routes/books'
-import { Request, Response } from 'express'
-import { Book } from '../src/routes/books/model'
-import { AppError } from '../src/model'
-import { createSandbox, SinonSandbox, SinonStub, assert as verify } from 'sinon'
-import { BookModel, BookSchema } from '../src/routes/books/schema'
-import { InferSchemaType, Query, Types } from 'mongoose'
+import {
+  addBookHttpHandler,
+  getBooksHttpHandler,
+} from '../src/routes/books/index.js'
+import { genericError } from '../src/model.js'
+import type { Request, Response } from 'express'
+import type { Book } from '../src/routes/books/model.js'
+import type { AppError } from '../src/model.js'
+import { createSandbox, type SinonSandbox, type SinonStub, assert } from 'sinon'
+import { BookModel, BookSchema } from '../src/routes/books/schema.js'
+import type { InferSchemaType } from 'mongoose'
+import { Query, Types } from 'mongoose'
 import { mockReq, mockRes } from 'sinon-express-mock'
-import * as TE from 'fp-ts/TaskEither'
+import * as TE from 'fp-ts/lib/TaskEither.js'
 type TT = InferSchemaType<typeof BookSchema>
-import * as model from '../src/routes/books/model'
 
 describe('get books', () => {
   type GetBooksRequest = Request<
@@ -39,7 +43,7 @@ describe('get books', () => {
     } as Query<Array<TT>, TT>
     mocked.returns(result)
     await getBooksHttpHandler(req, res)
-    verify.calledWith(res.status, 200)
+    assert.calledWith(res.status, 200)
   })
 
   it('null result', async () => {
@@ -50,7 +54,7 @@ describe('get books', () => {
     } as Query<Array<TT>, TT>
     mocked.returns(result)
     await getBooksHttpHandler(req, res)
-    verify.calledWith(res.status, 404)
+    assert.calledWith(res.status, 404)
   })
 
   it('db call throwing error', async () => {
@@ -58,20 +62,36 @@ describe('get books', () => {
     const res = mockRes() as GetBooksResponse & mockRes.MockRes
     mocked.throws('oh my')
     await getBooksHttpHandler(req, res)
-    verify.calledWith(res.status, 500)
+    assert.calledWith(res.status, 500)
   })
 })
 
 describe('add book', () => {
-  type AddBookRequest = Request<Record<string, never>, AppError | void, unknown>
-  type AddBookResponse = Response<AppError | void>
+  type AddBookRequest = Request<Record<string, never>, AppError>
+  type AddBookResponse = Response<AppError>
 
   let sandbox: SinonSandbox
-  let mocked: SinonStub
+  let saveBookStub: SinonStub
+  let statusStub: SinonStub
+  let req: AddBookRequest
+  let res: AddBookResponse
 
   beforeEach(() => {
     sandbox = createSandbox()
-    mocked = sandbox.stub(model, 'saveBook')
+    saveBookStub = sandbox.stub()
+
+    statusStub = sandbox.stub().returnsThis()
+
+    req = {
+      body: {},
+    } as AddBookRequest
+
+    res = {
+      status: statusStub,
+      json: sandbox.stub().returnsThis(),
+      setHeader: sandbox.stub().returnsThis(),
+      end: sandbox.stub().returnsThis(),
+    } as unknown as AddBookResponse
   })
 
   afterEach(() => {
@@ -79,12 +99,8 @@ describe('add book', () => {
   })
 
   it('empty body', async () => {
-    const req = mockReq({
-      body: {},
-    }) as mockReq.MockReq & AddBookRequest
-    const res = mockRes() as AddBookResponse & mockRes.MockRes
-    await addBookHttpHandler()(req, res)
-    verify.calledWith(res.status, 403)
+    await addBookHttpHandler({ saveBook: saveBookStub })(req, res)
+    assert.calledWith(statusStub, 403)
   })
 
   it('missing title', async () => {
@@ -98,8 +114,8 @@ describe('add book', () => {
       },
     }) as mockReq.MockReq & AddBookRequest
     const res = mockRes() as AddBookResponse & mockRes.MockRes
-    await addBookHttpHandler()(req, res)
-    verify.calledWith(res.status, 403)
+    await addBookHttpHandler({ saveBook: saveBookStub })(req, res)
+    assert.calledWith(res.status, 403)
   })
 
   it('missing isbn', async () => {
@@ -113,8 +129,8 @@ describe('add book', () => {
       },
     }) as mockReq.MockReq & AddBookRequest
     const res = mockRes() as AddBookResponse & mockRes.MockRes
-    await addBookHttpHandler()(req, res)
-    verify.calledWith(res.status, 403)
+    await addBookHttpHandler({ saveBook: saveBookStub })(req, res)
+    assert.calledWith(res.status, 403)
   })
 
   it('wrong condition', async () => {
@@ -128,56 +144,50 @@ describe('add book', () => {
       },
     }) as mockReq.MockReq & AddBookRequest
     const res = mockRes() as AddBookResponse & mockRes.MockRes
-    await addBookHttpHandler()(req, res)
-    verify.calledWith(res.status, 403)
+    await addBookHttpHandler({ saveBook: saveBookStub })(req, res)
+    assert.calledWith(res.status, 403)
   })
 
   it('empty category', async () => {
-    const req = mockReq({
-      body: {
-        title: 'The Art of Computer Programming',
-        authors: ['Donald E. Knuth'],
-        isbn: '0201038064',
-        conditions: 'unknown',
-        categories: ['programming', 'computer', ''],
-      },
-    }) as mockReq.MockReq & AddBookRequest
-    const res = mockRes() as AddBookResponse & mockRes.MockRes
-    await addBookHttpHandler()(req, res)
-    verify.calledWith(res.status, 403)
-  })
+    req.body = {
+      title: 'Clean Code',
+      isbn: '9780132350884',
+      conditions: 'new',
+      authors: ['Robert C. Martin'],
+      categories: [''], // invalid on purpose
+    }
 
-  it('empty category', async () => {
-    const req = mockReq({
-      body: {
-        title: 'The Art of Computer Programming',
-        authors: [''],
-        isbn: '0201038064',
-        conditions: 'unknown',
-        categories: ['programming', 'computer', 'science'],
-      },
-    }) as mockReq.MockReq & AddBookRequest
-    const res = mockRes() as AddBookResponse & mockRes.MockRes
-    await addBookHttpHandler()(req, res)
-    verify.calledWith(res.status, 403)
+    await addBookHttpHandler({ saveBook: saveBookStub })(req, res)
+    assert.calledWithExactly(statusStub, 403)
   })
 
   it('right payload', async () => {
-    const req = mockReq({
-      body: {
-        title: 'The Art of Computer Programming',
-        authors: ['Donald E. Knuth'],
-        isbn: '0201038064',
-        conditions: 'used',
-        categories: ['programming', 'computer', 'science'],
-      },
-    }) as mockReq.MockReq & AddBookRequest
-    const res = mockRes() as AddBookResponse & mockRes.MockRes
-    res.setHeader = (): AddBookResponse & mockRes.MockRes => {
-      return res
-    } // HACK (https://github.com/danawoodman/sinon-express-mock/pull/23)
-    mocked.returns(TE.right<AppError, Types.ObjectId>(new Types.ObjectId(1)))
-    await addBookHttpHandler()(req, res)
-    verify.calledWith(res.status, 201)
+    req.body = {
+      title: 'Clean Code',
+      isbn: '9780132350884',
+      conditions: 'new',
+      authors: ['Robert C. Martin'],
+      categories: ['software'],
+    }
+
+    saveBookStub.returns(TE.right(new Types.ObjectId()))
+    await addBookHttpHandler({ saveBook: saveBookStub })(req, res)
+
+    assert.calledWithExactly(statusStub, 201)
+  })
+
+  it('db call throwing error', async () => {
+    req.body = {
+      title: 'Clean Code',
+      isbn: '9780132350884',
+      conditions: 'new',
+      authors: ['Robert C. Martin'],
+      categories: ['software'],
+    }
+
+    saveBookStub.returns(TE.left(genericError('db error')))
+    await addBookHttpHandler({ saveBook: saveBookStub })(req, res)
+
+    assert.calledWithExactly(statusStub, 500)
   })
 })

@@ -1,7 +1,7 @@
-import * as O from 'fp-ts/Option'
-import * as A from 'fp-ts/Array'
-import { pipe } from 'fp-ts/function'
-import { ConfigCodec } from './codecs'
+import * as O from 'fp-ts/lib/Option.js'
+import * as A from 'fp-ts/lib/Array.js'
+import { pipe } from 'fp-ts/lib/function.js'
+import { ConfigCodec } from './codecs.js'
 import { Validation } from 'io-ts'
 
 type Config = {

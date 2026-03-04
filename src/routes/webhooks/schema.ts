@@ -1,6 +1,6 @@
-import { Timestamp } from 'model'
+import { Timestamp } from 'model.js'
 import { Schema, model } from 'mongoose'
-import { WebHook } from './model'
+import { WebHook } from './model.js'
 
 const WebHookSchema = new Schema<WebHook & Timestamp>({
   url: {

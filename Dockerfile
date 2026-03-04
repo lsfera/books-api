@@ -1,17 +1,18 @@
-FROM node:21.5.0 AS base
-RUN mkdir -p /opt/app
+FROM node:22-bookworm-slim AS base
 WORKDIR /opt/app
-COPY package*.json ./
-RUN npm install
+RUN corepack enable
+
+FROM base AS deps
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+FROM deps AS builder
 COPY . .
-FROM base as builder
-WORKDIR /opt/app
-RUN npm run build
-# FROM node:21.5.0-alpine # TODO: it gets stuck with alpine... :-/
-FROM node:21.5.0
-WORKDIR /opt/app
-COPY package*.json ./
-RUN npm install --omit=dev
+RUN pnpm run build
+
+FROM base AS runtime
+ENV NODE_ENV=production
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
 COPY --from=builder /opt/app/.dist ./.dist
-COPY src/ .
-CMD [ "npm", "run", "start"]
+CMD ["pnpm", "run", "start"]

@@ -1,12 +1,12 @@
 import { Request, Response } from 'express'
-import * as TE from 'fp-ts/TaskEither'
-import * as T from 'fp-ts/Task'
-import { pipe } from 'fp-ts/function'
-import { WebHookCodec } from './codecs'
-import { registerWebHook } from './model'
-import { AppError, flattenValidationErrors } from '../../model'
+import * as TE from 'fp-ts/lib/TaskEither.js'
+import * as T from 'fp-ts/lib/Task.js'
+import { pipe } from 'fp-ts/lib/function.js'
+import { WebHookCodec } from './codecs.js'
+import { registerWebHook } from './model.js'
+import { AppError, flattenValidationErrors } from '../../model.js'
 import { context, trace } from '@opentelemetry/api'
-import { replyToError } from '../../utils'
+import { replyToError } from '../../utils.js'
 
 const registerWebHookHttpHandler = async (
   req: Request<Record<string, never>, AppError | void, unknown>,

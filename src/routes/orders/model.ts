@@ -1,12 +1,12 @@
-import { OrderCodec } from './codecs'
+import { OrderCodec } from './codecs.js'
 import * as t from 'io-ts'
 import { InferSchemaType, Types } from 'mongoose'
-import { OrderModel, OrderSchema } from './schema'
-import { pipe } from 'fp-ts/function'
-import * as E from 'fp-ts/Either'
-import * as O from 'fp-ts/Option'
-import * as TE from 'fp-ts/TaskEither'
-import { AppError, genericError, notFoundError } from '../../model'
+import { OrderModel, OrderSchema } from './schema.js'
+import { pipe } from 'fp-ts/lib/function.js'
+import * as E from 'fp-ts/lib/Either.js'
+import * as O from 'fp-ts/lib/Option.js'
+import * as TE from 'fp-ts/lib/TaskEither.js'
+import { AppError, genericError, notFoundError } from '../../model.js'
 
 type Order = t.TypeOf<typeof OrderCodec>
 

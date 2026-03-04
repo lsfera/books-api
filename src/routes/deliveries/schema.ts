@@ -1,6 +1,6 @@
-import { Timestamp } from 'model'
+import { Timestamp } from 'model.js'
 import { Schema, model } from 'mongoose'
-import { Delivery } from './model'
+import { Delivery } from './model.js'
 
 const DeliverySchema = new Schema<Delivery & Timestamp>({
   bookIds: [
