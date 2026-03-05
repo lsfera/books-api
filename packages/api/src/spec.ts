@@ -17,6 +17,25 @@ const doc = {
       registerWebHook: {
         $url: 'http://localhost:3001',
       },
+      saveWebHookMessage: {
+        $type: 'out_of_stock',
+        $book: {
+          $id: '507f1f77bcf86cd799439011',
+          $url: 'http://localhost:3001/books/507f1f77bcf86cd799439011',
+        },
+      },
+      findWebHookMessages: {
+        $messages: [
+          {
+            $type: 'out_of_stock',
+            $book: {
+              $id: '507f1f77bcf86cd799439011',
+              $url: 'http://localhost:3001/books/507f1f77bcf86cd799439011',
+            },
+            $receivedAt: '2026-03-05T16:00:00.000Z',
+          },
+        ],
+      },
       placeOrder: {
         $purchaser: 'Benjamin C. Pierce',
         $bookIds: ['ABC', '123'],
@@ -28,6 +47,7 @@ const doc = {
       findBooks: {
         $books: [
           {
+            $id: '507f1f77bcf86cd799439011',
             $title: 'Types and Programming Languages',
             $isbn: '0262162091',
             $conditions: 'new',
@@ -37,6 +57,7 @@ const doc = {
         ],
       },
       findBook: {
+        $id: '507f1f77bcf86cd799439011',
         $title: 'Types and Programming Languages',
         $isbn: '0262162091',
         $conditions: 'new',
@@ -74,6 +95,13 @@ const requiredOperationDocs: Record<
       summary?: string
       description?: string
       operationId?: string
+      parameters?: Array<{
+        name: string
+        in: string
+        required: boolean
+        schema: { type: string }
+        description?: string
+      }>
       requestBody?: {
         required: boolean
         content: Record<string, { schema: { $ref: string } }>
@@ -85,8 +113,33 @@ const requiredOperationDocs: Record<
   '/books': {
     get: {
       summary: 'List all books.',
-      description: 'List all books.',
+      description:
+        'List all books. Supports optional filtering by title, author, and isbn query params.',
       operationId: 'find_books',
+      parameters: [
+        {
+          name: 'title',
+          in: 'query',
+          required: false,
+          schema: { type: 'string' },
+          description: 'Filter books by title (case-insensitive contains).',
+        },
+        {
+          name: 'author',
+          in: 'query',
+          required: false,
+          schema: { type: 'string' },
+          description:
+            'Filter books by author name against the authors list (case-insensitive contains).',
+        },
+        {
+          name: 'isbn',
+          in: 'query',
+          required: false,
+          schema: { type: 'string' },
+          description: 'Filter books by ISBN (case-insensitive contains).',
+        },
+      ],
       responses: {
         200: {
           description: '',
@@ -230,6 +283,47 @@ const requiredOperationDocs: Record<
       },
     },
   },
+  '/webhook-messages': {
+    get: {
+      summary: 'List webhook notification messages.',
+      description: 'Returns the latest received webhook notification payloads.',
+      operationId: 'find_webhook_messages',
+      responses: {
+        200: {
+          description: '',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/findWebHookMessages',
+              },
+            },
+          },
+        },
+      },
+    },
+    post: {
+      summary: 'Receive webhook notification message.',
+      description:
+        'Receives webhook notification payloads and stores recent messages for inspection.',
+      operationId: 'save_webhook_message',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/saveWebHookMessage',
+            },
+          },
+        },
+      },
+      responses: {
+        202: {
+          description: 'Webhook message accepted',
+          content: {},
+        },
+      },
+    },
+  },
 }
 
 const mergeMissingOperationDocs = async (): Promise<void> => {
@@ -243,6 +337,13 @@ const mergeMissingOperationDocs = async (): Promise<void> => {
           summary?: string
           description?: string
           operationId?: string
+          parameters?: Array<{
+            name: string
+            in: string
+            required: boolean
+            schema: { type: string }
+            description?: string
+          }>
           requestBody?: {
             required: boolean
             content: Record<string, { schema: { $ref: string } }>
@@ -261,6 +362,7 @@ const mergeMissingOperationDocs = async (): Promise<void> => {
       op.summary = requiredDoc.summary
       op.description = requiredDoc.description
       op.operationId = requiredDoc.operationId
+      op.parameters = requiredDoc.parameters
       op.requestBody = requiredDoc.requestBody
 
       op.responses = {

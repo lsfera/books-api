@@ -64,6 +64,47 @@ describe('get books', () => {
     await getBooksHttpHandler(req, res)
     assert.calledWith(res.status, 500)
   })
+
+  it('applies title/author/isbn filters to query', async () => {
+    const req = mockReq({
+      query: {
+        title: 'Clean',
+        author: 'Martin',
+        isbn: '978013',
+      },
+    }) as mockReq.MockReq & GetBooksRequest
+    const res = mockRes() as GetBooksResponse & mockRes.MockRes
+    const result = {
+      exec: () => new Promise<Array<TT> | null | undefined>((r) => r([])),
+    } as Query<Array<TT>, TT>
+
+    mocked.returns(result)
+
+    await getBooksHttpHandler(req, res)
+
+    assert.calledOnce(mocked)
+
+    const query = mocked.firstCall.args[0] as {
+      title?: { $regex: string; $options: string }
+      isbn?: { $regex: string; $options: string }
+      authors?: { $elemMatch?: { $regex: string; $options: string } }
+    }
+
+    assert.match(query.title, {
+      $regex: 'Clean',
+      $options: 'i',
+    })
+    assert.match(query.isbn, {
+      $regex: '978013',
+      $options: 'i',
+    })
+    assert.match(query.authors, {
+      $elemMatch: {
+        $regex: 'Martin',
+        $options: 'i',
+      },
+    })
+  })
 })
 
 describe('add book', () => {

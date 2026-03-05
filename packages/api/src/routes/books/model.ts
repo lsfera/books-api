@@ -15,6 +15,35 @@ type Book = t.TypeOf<typeof BookCodec>
 
 type TT = InferSchemaType<typeof BookSchema>
 
+type BookFilters = {
+  title?: string
+  author?: string
+  isbn?: string
+}
+
+const escapeRegExp = (input: string): string =>
+  input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+const toBookQuery = (filters: BookFilters): Record<string, unknown> => {
+  const query: Record<string, unknown> = {}
+
+  if (filters.title) {
+    query.title = { $regex: escapeRegExp(filters.title), $options: 'i' }
+  }
+
+  if (filters.isbn) {
+    query.isbn = { $regex: escapeRegExp(filters.isbn), $options: 'i' }
+  }
+
+  if (filters.author) {
+    query.authors = {
+      $elemMatch: { $regex: escapeRegExp(filters.author), $options: 'i' },
+    }
+  }
+
+  return query
+}
+
 const bookFromSchema = (
   book: TT & { _id: Types.ObjectId },
 ): Book & { id: string } => ({
@@ -45,13 +74,18 @@ const findBook = (
     ),
   )
 
-const findBooks = (): TE.TaskEither<
+const findBooks = (
+  filters: BookFilters = {},
+): TE.TaskEither<
   AppError,
   Array<TT & { _id: Types.ObjectId }>
 > =>
   pipe(
     TE.tryCatch(
-      () => BookModel.find<TT & { _id: Types.ObjectId }>({}).exec(),
+      () =>
+        BookModel.find<TT & { _id: Types.ObjectId }>(
+          toBookQuery(filters),
+        ).exec(),
       () => genericError(`could not retrieve any book`),
     ),
     TE.chain((books: Array<TT & { _id: Types.ObjectId }>) =>

@@ -12,10 +12,27 @@ import { replyToError, getParam } from '../../utils.js'
 import { ordersCount } from '../orders/model.js'
 import { deliveriesCount } from '../deliveries/model.js'
 
+type BooksQuery = {
+  title?: string
+  author?: string
+  isbn?: string
+}
+
+const getSingleQueryParam = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') {
+    return undefined
+  }
+
+  const normalized = value.trim()
+  return normalized.length > 0 ? normalized : undefined
+}
+
 const getBooksHttpHandler = async (
-  _: Request<
+  req: Request<
     Record<string, never>,
-    AppError | { books: Array<Book & { id: string }> }
+    AppError | { books: Array<Book & { id: string }> },
+    unknown,
+    BooksQuery
   >,
   res: Response<AppError | { books: Array<Book & { id: string }> }>,
 ): Promise<void> => {
@@ -38,8 +55,19 @@ const getBooksHttpHandler = async (
   #swagger.responses[500] = { description: 'Internal server error' }
 */
   const span = trace.getSpan(context.active())
+
+  const filters = {
+    title: getSingleQueryParam(req.query.title),
+    author: getSingleQueryParam(req.query.author),
+    isbn: getSingleQueryParam(req.query.isbn),
+  }
+
+  span?.setAttribute('filter.title', filters.title ?? '')
+  span?.setAttribute('filter.author', filters.author ?? '')
+  span?.setAttribute('filter.isbn', filters.isbn ?? '')
+
   await pipe(
-    findBooks(),
+    findBooks(filters),
     TE.fold(replyToError(res, span), (x) =>
       T.of(res.status(200).json({ books: x.map((y) => bookFromSchema(y)) })),
     ),
@@ -92,44 +120,44 @@ type AddBookDeps = {
 
 const addBookHttpHandler =
   (deps: AddBookDeps = { saveBook }) =>
-  async (req: Request, res: Response): Promise<void> => {
-    /*
-        #swagger.summary = 'Insert a book.'
-        #swagger.description = 'Insert a book.'
-        #swagger.operationId = 'save_book'
-        #swagger.requestBody = {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                ref: "#/components/schemas/saveBook"
+    async (req: Request, res: Response): Promise<void> => {
+      /*
+          #swagger.summary = 'Insert a book.'
+          #swagger.description = 'Insert a book.'
+          #swagger.operationId = 'save_book'
+          #swagger.requestBody = {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  ref: "#/components/schemas/saveBook"
+                }
               }
             }
           }
-        }
-        #swagger.responses[201] = {
-          description: "Book added",
-          content: {}
-        }
-        #swagger.responses[403] = { description: 'Validation/already exists error' }
-        #swagger.responses[404] = { description: 'Resource not found' }
-        #swagger.responses[500] = { description: 'Internal server error' }
-        */
-    const span = trace.getSpan(context.active())
-    await pipe(
-      TE.fromEither(BookCodec.decode(req.body)),
-      TE.mapLeft(flattenValidationErrors),
-      TE.chain(deps.saveBook),
-      TE.fold(replyToError(res, span), (x) =>
-        T.of(
-          res
-            .status(201)
-            .setHeader('Location', `/books/${x._id.toString()}`)
-            .end(),
+          #swagger.responses[201] = {
+            description: "Book added",
+            content: {}
+          }
+          #swagger.responses[403] = { description: 'Validation/already exists error' }
+          #swagger.responses[404] = { description: 'Resource not found' }
+          #swagger.responses[500] = { description: 'Internal server error' }
+          */
+      const span = trace.getSpan(context.active())
+      await pipe(
+        TE.fromEither(BookCodec.decode(req.body)),
+        TE.mapLeft(flattenValidationErrors),
+        TE.chain(deps.saveBook),
+        TE.fold(replyToError(res, span), (x) =>
+          T.of(
+            res
+              .status(201)
+              .setHeader('Location', `/books/${x._id.toString()}`)
+              .end(),
+          ),
         ),
-      ),
-    )()
-  }
+      )()
+    }
 
 const bookAvailabilityHttpHandler = async (
   req: Request<{ bookId?: string }, AppError | { count: number }>,

@@ -2,8 +2,8 @@ import { Schema, model } from 'mongoose'
 import type { Book } from './model.js'
 import type { Timestamp } from '../../model.js'
 
-// Define before first use
-export const ALL_CONDITIONS = ['new', 'used', 'refurbished'] as const
+// Keep enum aligned with request codec and webapp schema
+export const ALL_CONDITIONS = ['used', 'new', 'like new', 'good'] as const
 export type BookCondition = (typeof ALL_CONDITIONS)[number]
 
 const BookSchema = new Schema<Book & Timestamp>({
