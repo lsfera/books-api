@@ -19,24 +19,27 @@ const placeOrderHttpHandler =
     res: Response<AppError | void>,
   ): Promise<void> => {
     /*
-      #swagger.summary = 'Order placement.'
-      #swagger.description = 'Incoming orders cause the stock quantity to decrease.'
-      #swagger.operationId = 'place_order'
-      #swagger.requestBody = {
-        required: true,
-        content: {
-          "application/json": {
-            schema: {
-              ref: "#/components/schemas/placeOrder"
+        #swagger.summary = 'Order placement.'
+        #swagger.description = 'Incoming orders cause the stock quantity to decrease.'
+        #swagger.operationId = 'place_order'
+        #swagger.requestBody = {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                ref: "#/components/schemas/placeOrder"
+              }
             }
           }
         }
-      }
-      #swagger.responses[201] = {
-        description: "Order placed",
-        content: {}
-      }
-    */
+        #swagger.responses[201] = {
+          description: "Order placed",
+          content: {}
+        }
+        #swagger.responses[403] = { description: 'Validation/already exists error' }
+        #swagger.responses[404] = { description: 'Resource not found' }
+        #swagger.responses[500] = { description: 'Internal server error' }
+      */
     const span = trace.getSpan(context.active())
     await pipe(
       TE.fromEither(OrderCodec.decode(req.body)),

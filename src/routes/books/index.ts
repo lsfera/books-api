@@ -33,6 +33,9 @@ const getBooksHttpHandler = async (
       }
     }
   }
+  #swagger.responses[403] = { description: 'Validation/already exists error' }
+  #swagger.responses[404] = { description: 'Resource not found' }
+  #swagger.responses[500] = { description: 'Internal server error' }
 */
   const span = trace.getSpan(context.active())
   await pipe(
@@ -61,6 +64,9 @@ const getBookHttpHandler = async (
       }
     }
   }
+  #swagger.responses[403] = { description: 'Validation/already exists error' }
+  #swagger.responses[404] = { description: 'Resource not found' }
+  #swagger.responses[500] = { description: 'Internal server error' }
 */
   const span = trace.getSpan(context.active())
   span?.setAttribute('bookId', req.params.bookId ?? '<null>')
@@ -88,24 +94,27 @@ const addBookHttpHandler =
   (deps: AddBookDeps = { saveBook }) =>
   async (req: Request, res: Response): Promise<void> => {
     /*
-      #swagger.summary = 'Insert a book.'
-      #swagger.description = 'Insert a book.'
-      #swagger.operationId = 'save_book'
-      #swagger.requestBody = {
-        required: true,
-        content: {
-          "application/json": {
-            schema: {
-              ref: "#/components/schemas/saveBook"
+        #swagger.summary = 'Insert a book.'
+        #swagger.description = 'Insert a book.'
+        #swagger.operationId = 'save_book'
+        #swagger.requestBody = {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                ref: "#/components/schemas/saveBook"
+              }
             }
           }
         }
-      }
-      #swagger.responses[201] = {
-        description: "Book added",
-        content: {}
-      }
-      */
+        #swagger.responses[201] = {
+          description: "Book added",
+          content: {}
+        }
+        #swagger.responses[403] = { description: 'Validation/already exists error' }
+        #swagger.responses[404] = { description: 'Resource not found' }
+        #swagger.responses[500] = { description: 'Internal server error' }
+        */
     const span = trace.getSpan(context.active())
     await pipe(
       TE.fromEither(BookCodec.decode(req.body)),
@@ -140,6 +149,9 @@ const bookAvailabilityHttpHandler = async (
       }
     }
   }
+  #swagger.responses[403] = { description: 'Validation/already exists error' }
+  #swagger.responses[404] = { description: 'Resource not found' }
+  #swagger.responses[500] = { description: 'Internal server error' }
 */
   const span = trace.getSpan(context.active())
   span?.setAttribute('bookId', req.params.bookId ?? '<null>')

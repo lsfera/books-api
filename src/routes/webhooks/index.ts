@@ -30,6 +30,9 @@ const registerWebHookHttpHandler = async (
     description: "Webhook registered",
     content: {}
   }
+  #swagger.responses[403] = { description: 'Validation/already exists error' }
+  #swagger.responses[404] = { description: 'Resource not found' }
+  #swagger.responses[500] = { description: 'Internal server error' }
 */
   const span = trace.getSpan(context.active())
   await pipe(

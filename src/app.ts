@@ -16,6 +16,7 @@ import { DeliveryModel } from './routes/deliveries/schema.js'
 import { OrderModel } from './routes/orders/schema.js'
 import { handler } from './routes/notifications/index.js'
 import { registerWebHookHttpHandler } from './routes/webhooks/index.js'
+import { openApiSpecHttpHandler } from './routes/openapi/index.js'
 
 const buildApp = async (cfg: Config): Promise<core.Express> => {
   const app = express()
@@ -34,6 +35,7 @@ const buildApp = async (cfg: Config): Promise<core.Express> => {
   app.get('/books', getBooksHttpHandler)
   app.get('/books/:bookId', getBookHttpHandler)
   app.get('/books/:bookId/availability', bookAvailabilityHttpHandler)
+  app.get('/openapi.json', openApiSpecHttpHandler)
   app.post('/books', addBookHttpHandler())
   app.post('/orders', placeOrderHttpHandler())
   app.post('/deliveries', recordDeliveryHttpHandler())

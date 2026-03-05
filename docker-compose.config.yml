@@ -1,0 +1,97 @@
+configs:
+  nginx_default_conf:
+    content: |
+      resolver 127.0.0.11 ipv6=off valid=10s;
+
+      upstream api_backend {
+        zone api_backend 64k;
+        server api:3001 resolve;
+        server devcontainer:3001 resolve backup;
+      }
+
+      upstream metrics_backend {
+        zone metrics_backend 64k;
+        server api:3002 resolve;
+        server devcontainer:3002 resolve backup;
+      }
+
+      upstream swagger_ui {
+        server swagger-ui:8080;
+      }
+
+      server {
+        listen 80;
+        server_name _;
+
+        location /swagger-ui {
+          proxy_pass http://swagger_ui;
+        }
+
+        location = /api-docs/openapi.json {
+          proxy_pass http://api_backend/openapi.json;
+          add_header Access-Control-Allow-Origin * always;
+          add_header Access-Control-Allow-Methods "GET, OPTIONS" always;
+          add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Accept-Language" always;
+          add_header Access-Control-Expose-Headers "Content-Length,Content-Range,Content-Language" always;
+        }
+
+        location /pokemon/ {
+          proxy_pass http://api_backend;
+        }
+
+        location /books {
+          proxy_pass http://api_backend;
+        }
+
+        location /orders {
+          proxy_pass http://api_backend;
+        }
+
+        location /deliveries {
+          proxy_pass http://api_backend;
+        }
+
+        location /webhooks {
+          proxy_pass http://api_backend;
+        }
+
+        location /metrics {
+          proxy_pass http://metrics_backend/metrics;
+        }
+
+        location / {
+          return 301 /swagger-ui/;
+        }
+      }
+  prometheus_config:
+    content: |
+      global:
+        scrape_interval: 15s
+        scrape_timeout: 10s
+        evaluation_interval: 15s
+      alerting:
+        alertmanagers:
+        - static_configs:
+          - targets: []
+          scheme: http
+          timeout: 10s
+          api_version: v2
+      scrape_configs:
+      - job_name: prometheus
+        honor_timestamps: true
+        scrape_interval: 15s
+        scrape_timeout: 10s
+        metrics_path: /metrics
+        scheme: http
+        static_configs:
+        - targets:
+          - prometheus:9090
+      - job_name: api
+        honor_timestamps: true
+        scrape_interval: 15s
+        scrape_timeout: 10s
+        metrics_path: /metrics
+        scheme: http
+        static_configs:
+        - targets:
+          - api:3002

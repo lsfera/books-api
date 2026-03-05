@@ -8,8 +8,16 @@ A bookstore owner wants a very rudimentary software she can use to keep track of
 
 ## building, running, etc...
 
-You can build the project by launching `npm run build`.
-Within the project, you'll find a Docker Compose descriptor file that enables you to leverage the project's infrastructure directly from your local machine. So, just run `docker compose up`.
+You can build the project by launching `pnpm run build`.
+
+Within the project, you'll find Docker Compose descriptor files that enable you to leverage the project's infrastructure directly from your local machine.
+
+- `make run`: build image(s) and run all services.
+- `make debug`: run infrastructure services only (without `api`) for VS Code debugging.
+- `make stop`: stop and remove compose services.
+
+Equivalent direct compose command:
+`docker compose -f docker-compose.yml -f docker-compose.config.yml up -d`.
 
 ## configuration
 
@@ -24,7 +32,9 @@ The application is configurable through environment variables or command-line ar
 
 ## documentation
 
-Run `npm run doc` to generate API documentation (specifications are contained in the **./src/spec.json** file).
+Run `pnpm run doc` to generate API documentation (specifications are contained in the **./src/spec.json** file).
+After generation, the OpenAPI spec is available at `GET /openapi.json` (via nginx at `http://localhost:8080/api-docs/openapi.json`).
+Swagger UI is available at `http://localhost:8080/swagger-ui/`.
 
 ## notifications
 
@@ -37,6 +47,11 @@ With Docker Compose, instances of [Jaeger](https://www.jaegertracing.io) and [Pr
 ## example of curls
 
 ```sh
+# set this from the Location header returned by POST /books
+BOOK_ID="<book-id>"
+```
+
+```sh
 # adding a book
 curl -v \
   -H 'Content-Type: application/json' \
@@ -45,7 +60,7 @@ curl -v \
   http://localhost:3001/books
 
 # < HTTP/1.1 201 Created
-# < Location: http://localhost:3001/books/65a8d01d0ee1676f846c8ce8
+# < Location: http://localhost:3001/books/<book-id>
 # < ...
 ```
 
@@ -54,7 +69,7 @@ curl -v \
 curl -v \
   -H 'Content-Type: application/json' \
   -X POST \
-  -d '{"purchaser":"Alonzo Church","bookIds":["65a8d01d0ee1676f846c8ce8"]}' \
+  -d '{"purchaser":"Alonzo Church","bookIds":["'"$BOOK_ID"'"]}' \
   http://localhost:3001/orders
 
 # < HTTP/1.1 201 Created
@@ -66,7 +81,7 @@ curl -v \
 curl -v \
   -H 'Content-Type: application/json' \
   -X POST \
-  -d '{"supplier":"Bertrand Russell","bookIds":["65a8e03ee4c7cfd6244f82e7"]}' \
+  -d '{"supplier":"Bertrand Russell","bookIds":["'"$BOOK_ID"'"]}' \
   http://localhost:3001/deliveries
 
 # < HTTP/1.1 201 Created
@@ -75,7 +90,7 @@ curl -v \
 
 ```sh
 # retrieving book availability
-curl -v -X GET http://localhost:3001/books/65a8d01d0ee1676f846c8ce8/availability
+curl -v -X GET "http://localhost:3001/books/$BOOK_ID/availability"
 
 # < HTTP/1.1 200 OK
 # < ...

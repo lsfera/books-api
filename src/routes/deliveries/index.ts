@@ -19,24 +19,27 @@ const recordDeliveryHttpHandler =
     res: Response<AppError | void>,
   ): Promise<void> => {
     /*
-      #swagger.summary = 'Delivery recording.'
-      #swagger.description = 'Deliveries increase the stock.'
-      #swagger.operationId = 'record_delivery'
-      #swagger.requestBody = {
-        required: true,
-        content: {
-          "application/json": {
-            schema: {
-              ref: "#/components/schemas/recordDelivery"
+        #swagger.summary = 'Delivery recording.'
+        #swagger.description = 'Deliveries increase the stock.'
+        #swagger.operationId = 'record_delivery'
+        #swagger.requestBody = {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                ref: "#/components/schemas/recordDelivery"
+              }
             }
           }
         }
-      }
-      #swagger.responses[201] = {
-        description: "Delivery recorded",
-        content: {}
-      }
-    */
+        #swagger.responses[201] = {
+          description: "Delivery recorded",
+          content: {}
+        }
+        #swagger.responses[403] = { description: 'Validation/already exists error' }
+        #swagger.responses[404] = { description: 'Resource not found' }
+        #swagger.responses[500] = { description: 'Internal server error' }
+      */
     const span = trace.getSpan(context.active())
     await pipe(
       TE.fromEither(DeliveryCodec.decode(req.body)),

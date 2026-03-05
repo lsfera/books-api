@@ -10,10 +10,10 @@
     "prettier": "prettier --write \"./{src,test}/**/*.ts\"",
     "prettier:check": "prettier --check \"./{src,test}/**/*.ts\"",
     "lint:check": "eslint --config eslint.config.cjs \"./{src,test}/**/*.ts\"",
-    "test": "NODE_OPTIONS='--loader=ts-node/esm' mocha \"test/**/*.ts\"",
-    "doc": "ts-node ./src/spec.ts && node ./node_modules/@redocly/cli/bin/cli.js build-docs --output=./src/spec.html ./src/spec.json",
-    "dev": "TS_NODE_EXPERIMENTAL_RESOLVER=true node --loader=ts-node/esm src/index.ts",
-    "dev:watch": "TS_NODE_EXPERIMENTAL_RESOLVER=true node --watch --loader=ts-node/esm src/index.ts",
+    "test": "NODE_OPTIONS='--import=tsx' mocha \"test/**/*.ts\"",
+    "doc": "tsx ./src/spec.ts && node ./node_modules/@redocly/cli/bin/cli.js build-docs --output=./src/spec.html ./src/spec.json",
+    "dev": "tsx src/index.ts",
+    "dev:watch": "tsx watch src/index.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "author": "",
@@ -32,18 +32,13 @@
     "@typescript-eslint/parser": "^8.56.1",
     "eslint": "^10.0.2",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-config-standard": "^17.1.0",
-    "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^5.5.5",
-    "eslint-plugin-promise": "^7.2.1",
     "mocha": "^11.7.5",
-    "mongodb": "^7.1.0",
     "prettier": "^3.8.1",
-    "sinon": "^21.0.1",
+    "sinon": "^21.0.2",
     "sinon-express-mock": "^2.2.1",
     "swagger-autogen": "^2.23.7",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
@@ -53,10 +48,10 @@
     "@opentelemetry/exporter-trace-otlp-proto": "^0.212.0",
     "@opentelemetry/instrumentation-express": "^0.60.0",
     "@opentelemetry/instrumentation-http": "^0.212.0",
-    "@opentelemetry/resources": "^2.5.1",
-    "@opentelemetry/sdk-metrics": "^2.5.1",
+    "@opentelemetry/resources": "^2.6.0",
+    "@opentelemetry/sdk-metrics": "^2.6.0",
     "@opentelemetry/sdk-node": "^0.212.0",
-    "@opentelemetry/sdk-trace-node": "^2.5.1",
+    "@opentelemetry/sdk-trace-node": "^2.6.0",
     "@opentelemetry/semantic-conventions": "^1.40.0",
     "@promster/express": "^15.4.6",
     "@promster/server": "^15.4.6",
@@ -64,8 +59,9 @@
     "fp-ts": "^2.16.11",
     "io-ts": "^2.2.22",
     "io-ts-types": "^0.5.19",
-    "mongoose": "^9.2.3"
+    "mongodb": "^7.1.0",
+    "mongoose": "^9.2.4"
   },
   "type": "module",
-  "packageManager": "pnpm@10.6.0"
+  "packageManager": "pnpm@10.30.3"
 }

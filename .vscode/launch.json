@@ -1,0 +1,43 @@
+{
+    "version": "0.2.0",
+    "compounds": [
+        {
+            "name": "compose+api:debug",
+            "configurations": [
+                "compose:debug",
+                "Debug API (tsx)"
+            ],
+            "stopAll": true
+        }
+    ],
+    "configurations": [
+        {
+            "name": "compose:debug",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "make debug",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Debug API (tsx)",
+            "type": "node",
+            "request": "launch",
+            "postDebugTask": "make:stop",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/src/index.ts",
+            "runtimeExecutable": "tsx",
+            "env": {
+                "DB_CONNECTION_STRING": "mongodb://mongodb:27017/booksland?replicaSet=rs0",
+                "APPLICATION_PORT": "3001",
+                "METRICS_PORT": "3002",
+                "OTLP_EXPORTER_HOST": "jaeger",
+                "OTLP_EXPORTER_PORT": "4318",
+                "BASE_URL": "http://localhost:3001"
+            },
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "console": "integratedTerminal"
+        }
+    ]
+}
