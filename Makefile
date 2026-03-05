@@ -7,7 +7,7 @@ list:
 COMPOSE_FILES=-f docker-compose.yml -f docker-compose.config.yml
 COMPOSE=docker compose $(COMPOSE_FILES)
 
-.PHONY: run stop debug
+.PHONY: run stop debug-api build-api
 
 run:
 	$(COMPOSE) up -d --build
@@ -15,5 +15,8 @@ run:
 stop:
 	$(COMPOSE) down --remove-orphans
 
-debug:
+debug-api:
 	$(COMPOSE) up -d --scale api=0 mongodb jaeger prometheus swagger-ui nginx
+
+build-api:
+	$(COMPOSE) build api

@@ -2,6 +2,7 @@ services:
   api:
     build:
       context: .
+      dockerfile: packages/api/Dockerfile
     image: api
     depends_on:
       - jaeger

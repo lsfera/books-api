@@ -12,6 +12,30 @@
                 "cwd": "${workspaceFolder}"
             },
             "problemMatcher": []
+        },
+        {
+            "label": "make:build-api",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "build-api"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "make:debug-api",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "debug-api"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
         }
     ]
 }

@@ -1,0 +1,636 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "@booksland/api",
+    "description": "books stock helper"
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {
+    "/books": {
+      "get": {
+        "description": "List all books. Supports optional filtering by title, author, and isbn query params.",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/findBooks"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Validation/already exists error"
+          },
+          "404": {
+            "description": "Resource not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "default": {
+            "description": ""
+          }
+        },
+        "summary": "List all books.",
+        "operationId": "find_books",
+        "parameters": [
+          {
+            "name": "title",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter books by title (case-insensitive contains)."
+          },
+          {
+            "name": "author",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter books by author name against the authors list (case-insensitive contains)."
+          },
+          {
+            "name": "isbn",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter books by ISBN (case-insensitive contains)."
+          }
+        ]
+      },
+      "post": {
+        "description": "Insert a book.",
+        "responses": {
+          "201": {
+            "description": "Book added",
+            "content": {}
+          },
+          "403": {
+            "description": "Validation/already exists error"
+          },
+          "404": {
+            "description": "Resource not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "default": {
+            "description": ""
+          }
+        },
+        "summary": "Insert a book.",
+        "operationId": "save_book",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/saveBook"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/books/{bookId}": {
+      "get": {
+        "description": "Get a book.",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/findBook"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Validation/already exists error"
+          },
+          "404": {
+            "description": "Resource not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "default": {
+            "description": ""
+          }
+        },
+        "summary": "Get a book.",
+        "operationId": "find_book"
+      }
+    },
+    "/books/{bookId}/availability": {
+      "get": {
+        "description": "Retrieve book availability.",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/bookAvailability"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Validation/already exists error"
+          },
+          "404": {
+            "description": "Resource not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "default": {
+            "description": ""
+          }
+        },
+        "summary": "Retrieve book availability.",
+        "operationId": "book_availability"
+      }
+    },
+    "/webhook-messages": {
+      "get": {
+        "description": "Returns the latest received webhook notification payloads.",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/findWebHookMessages"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Validation/already exists error"
+          },
+          "404": {
+            "description": "Resource not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "default": {
+            "description": ""
+          }
+        },
+        "summary": "List webhook notification messages.",
+        "operationId": "find_webhook_messages"
+      },
+      "post": {
+        "summary": "Receive webhook notification message.",
+        "description": "Receives webhook notification payloads and stores recent messages for inspection.",
+        "operationId": "save_webhook_message",
+        "responses": {
+          "202": {
+            "description": "Webhook message accepted",
+            "content": {}
+          },
+          "403": {
+            "description": "Validation/already exists error"
+          },
+          "404": {
+            "description": "Resource not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/saveWebHookMessage"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders": {
+      "post": {
+        "description": "Incoming orders cause the stock quantity to decrease.",
+        "responses": {
+          "201": {
+            "description": "Order placed",
+            "content": {}
+          },
+          "403": {
+            "description": "Validation/already exists error"
+          },
+          "404": {
+            "description": "Resource not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "default": {
+            "description": ""
+          }
+        },
+        "summary": "Order placement.",
+        "operationId": "place_order",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/placeOrder"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/deliveries": {
+      "post": {
+        "description": "Deliveries increase the stock.",
+        "responses": {
+          "201": {
+            "description": "Delivery recorded",
+            "content": {}
+          },
+          "403": {
+            "description": "Validation/already exists error"
+          },
+          "404": {
+            "description": "Resource not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "default": {
+            "description": ""
+          }
+        },
+        "summary": "Delivery recording.",
+        "operationId": "record_delivery",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/recordDelivery"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhooks": {
+      "post": {
+        "summary": "Webhook registration.",
+        "description": "Webhooks are the mechanism through which it is possible to subscribe to notifications regarding books that go out of stock.",
+        "operationId": "register_webhook",
+        "responses": {
+          "201": {
+            "description": "Webhook registered",
+            "content": {}
+          },
+          "403": {
+            "description": "Validation/already exists error"
+          },
+          "404": {
+            "description": "Resource not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/registerWebHook"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "registerWebHook": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "example": "http://localhost:3001"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "saveWebHookMessage": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "out_of_stock"
+          },
+          "book": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "507f1f77bcf86cd799439011"
+              },
+              "url": {
+                "type": "string",
+                "example": "http://localhost:3001/books/507f1f77bcf86cd799439011"
+              }
+            },
+            "required": [
+              "id",
+              "url"
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "book"
+        ]
+      },
+      "findWebHookMessages": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "out_of_stock"
+                },
+                "book": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "507f1f77bcf86cd799439011"
+                    },
+                    "url": {
+                      "type": "string",
+                      "example": "http://localhost:3001/books/507f1f77bcf86cd799439011"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "url"
+                  ]
+                },
+                "receivedAt": {
+                  "type": "string",
+                  "example": "2026-03-05T16:00:00.000Z"
+                }
+              },
+              "required": [
+                "type",
+                "book",
+                "receivedAt"
+              ]
+            }
+          }
+        },
+        "required": [
+          "messages"
+        ]
+      },
+      "placeOrder": {
+        "type": "object",
+        "properties": {
+          "purchaser": {
+            "type": "string",
+            "example": "Benjamin C. Pierce"
+          },
+          "bookIds": {
+            "type": "array",
+            "example": [
+              "ABC",
+              "123"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "purchaser",
+          "bookIds"
+        ]
+      },
+      "recordDelivery": {
+        "type": "object",
+        "properties": {
+          "supplier": {
+            "type": "string",
+            "example": "Benjamin C. Pierce"
+          },
+          "bookIds": {
+            "type": "array",
+            "example": [
+              "ABC",
+              "123"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "supplier",
+          "bookIds"
+        ]
+      },
+      "findBooks": {
+        "type": "object",
+        "properties": {
+          "books": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "507f1f77bcf86cd799439011"
+                },
+                "title": {
+                  "type": "string",
+                  "example": "Types and Programming Languages"
+                },
+                "isbn": {
+                  "type": "string",
+                  "example": "0262162091"
+                },
+                "conditions": {
+                  "type": "string",
+                  "example": "new"
+                },
+                "authors": {
+                  "type": "array",
+                  "example": [
+                    "Benjamin C. Pierce"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "categories": {
+                  "type": "array",
+                  "example": [
+                    "programming",
+                    "computer",
+                    "science"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "isbn",
+                "conditions",
+                "authors",
+                "categories"
+              ]
+            }
+          }
+        },
+        "required": [
+          "books"
+        ]
+      },
+      "findBook": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "title": {
+            "type": "string",
+            "example": "Types and Programming Languages"
+          },
+          "isbn": {
+            "type": "string",
+            "example": "0262162091"
+          },
+          "conditions": {
+            "type": "string",
+            "example": "new"
+          },
+          "authors": {
+            "type": "array",
+            "example": [
+              "Benjamin C. Pierce"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "categories": {
+            "type": "array",
+            "example": [
+              "programming",
+              "computer",
+              "science"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "isbn",
+          "conditions",
+          "authors",
+          "categories"
+        ]
+      },
+      "saveBook": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Types and Programming Languages"
+          },
+          "isbn": {
+            "type": "string",
+            "example": "0262162091"
+          },
+          "conditions": {
+            "type": "string",
+            "example": "new"
+          },
+          "authors": {
+            "type": "array",
+            "example": [
+              "Benjamin C. Pierce"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "categories": {
+            "type": "array",
+            "example": [
+              "programming",
+              "computer",
+              "science"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "title",
+          "isbn",
+          "conditions",
+          "authors",
+          "categories"
+        ]
+      },
+      "bookAvailability": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "example": 4
+          }
+        },
+        "required": [
+          "count"
+        ]
+      }
+    }
+  }
+}

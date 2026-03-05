@@ -17,6 +17,10 @@ import { OrderModel } from './routes/orders/schema.js'
 import { handler } from './routes/notifications/index.js'
 import { registerWebHookHttpHandler } from './routes/webhooks/index.js'
 import { openApiSpecHttpHandler } from './routes/openapi/index.js'
+import {
+  getWebHookMessagesHttpHandler,
+  saveWebHookMessageHttpHandler,
+} from './routes/webhook-messages/index.js'
 
 const buildApp = async (cfg: Config): Promise<core.Express> => {
   const app = express()
@@ -35,10 +39,12 @@ const buildApp = async (cfg: Config): Promise<core.Express> => {
   app.get('/books', getBooksHttpHandler)
   app.get('/books/:bookId', getBookHttpHandler)
   app.get('/books/:bookId/availability', bookAvailabilityHttpHandler)
+  app.get('/webhook-messages', getWebHookMessagesHttpHandler)
   app.get('/openapi.json', openApiSpecHttpHandler)
   app.post('/books', addBookHttpHandler())
   app.post('/orders', placeOrderHttpHandler())
   app.post('/deliveries', recordDeliveryHttpHandler())
+  app.post('/webhook-messages', saveWebHookMessageHttpHandler)
   app.post('/webhooks', registerWebHookHttpHandler)
   DeliveryModel.watch().on('change', handler)
   OrderModel.watch().on('change', handler)

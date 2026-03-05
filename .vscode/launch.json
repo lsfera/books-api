@@ -2,29 +2,112 @@
     "version": "0.2.0",
     "compounds": [
         {
-            "name": "compose+api:debug",
+            "name": "compose+api:debug-api",
             "configurations": [
-                "compose:debug",
+                "compose:debug-api",
                 "Debug API (tsx)"
+            ],
+            "stopAll": true
+        },
+        {
+            "name": "compose+api+webapp:debug-api",
+            "configurations": [
+                "compose:debug-api",
+                "Debug API (tsx)",
+                "Webapp Dev (Vite - debug-api)"
+            ],
+            "stopAll": true
+        },
+        {
+            "name": "compose+webapp:run",
+            "configurations": [
+                "compose:run",
+                "Webapp Dev (Vite - compose)",
+                "Debug Webapp (Chrome)"
             ],
             "stopAll": true
         }
     ],
     "configurations": [
         {
-            "name": "compose:debug",
+            "name": "compose:debug-api",
             "type": "node-terminal",
             "request": "launch",
-            "command": "make debug",
+            "command": "make debug-api",
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "compose:run",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "make run",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Webapp Dev (Vite - debug-api)",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "pnpm --filter @booksland/webapp dev --host 0.0.0.0 --port 5173",
+            "cwd": "${workspaceFolder}",
+            "serverReadyAction": {
+                "pattern": "Local:\\s+(https?://[^\\s]+)",
+                "uriFormat": "%s",
+                "action": "debugWithChrome",
+                "webRoot": "${workspaceFolder}/packages/webapp"
+            },
+            "env": {
+                "NODE_ENV": "development",
+                "APPLICATION_PORT": "3001",
+                "METRICS_PORT": "3002",
+                "BASE_URL": "http://localhost:3001",
+                "VITE_PORT": "5173",
+                "VITE_API_BASE_URL": "http://localhost:3001",
+                "VITE_API_DOCS_URL": "http://localhost:3001/openapi.json",
+                "VITE_PROXY_TARGET": "http://localhost:3001",
+                "VITE_API_DOCS_PROXY_TARGET": "http://localhost:3001",
+                "VITE_WEBHOOK_URL": "http://localhost:3001/webhook-messages"
+            }
+        },
+        {
+            "name": "Webapp Dev (Vite - compose)",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "pnpm --filter @booksland/webapp dev --host 0.0.0.0 --port 5173",
+            "cwd": "${workspaceFolder}",
+            "serverReadyAction": {
+                "pattern": "Local:\\s+(https?://[^\\s]+)",
+                "uriFormat": "%s",
+                "action": "debugWithChrome",
+                "webRoot": "${workspaceFolder}/packages/webapp"
+            },
+            "env": {
+                "NODE_ENV": "development",
+                "APPLICATION_PORT": "3001",
+                "METRICS_PORT": "3002",
+                "BASE_URL": "http://api:3001",
+                "VITE_PORT": "5173",
+                "VITE_API_BASE_URL": "http://api:3001",
+                "VITE_API_DOCS_URL": "http://api:3001/openapi.json",
+                "VITE_PROXY_TARGET": "http://api:3001",
+                "VITE_API_DOCS_PROXY_TARGET": "http://api:3001",
+                "VITE_WEBHOOK_URL": "http://api:3001/webhook-messages"
+            }
+        },
+        {
+            "name": "Debug Webapp (Chrome)",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:5173",
+            "webRoot": "${workspaceFolder}/packages/webapp",
+            "sourceMaps": true
         },
         {
             "name": "Debug API (tsx)",
             "type": "node",
             "request": "launch",
             "postDebugTask": "make:stop",
-            "cwd": "${workspaceFolder}",
-            "program": "${workspaceFolder}/src/index.ts",
+            "cwd": "${workspaceFolder}/packages/api",
+            "program": "${workspaceFolder}/packages/api/src/index.ts",
             "runtimeExecutable": "tsx",
             "env": {
                 "DB_CONNECTION_STRING": "mongodb://mongodb:27017/booksland?replicaSet=rs0",

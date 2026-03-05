@@ -1,0 +1,237 @@
+:root {
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+
+    color-scheme: light dark;
+    color: rgba(255, 255, 255, 0.87);
+    background-color: #242424;
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    margin: 0;
+    display: flex;
+    place-items: center;
+    min-width: 320px;
+    min-height: 100vh;
+}
+
+#root {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem;
+    text-align: center;
+    width: 100%;
+}
+
+h1 {
+    font-size: 3.2em;
+    line-height: 1.1;
+}
+
+button {
+    border-radius: 8px;
+    border: 1px solid transparent;
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    font-weight: 500;
+    font-family: inherit;
+    background-color: #1a1a1a;
+    cursor: pointer;
+    transition: border-color 0.25s;
+}
+
+button:hover {
+    border-color: #646cff;
+}
+
+button:focus,
+button:focus-visible {
+    outline: 4px auto -webkit-focus-ring-color;
+}
+
+.card {
+    padding: 2em;
+}
+
+.book-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.book-card {
+    border: 1px solid #646cff;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: left;
+    background-color: #1a1a1a;
+}
+
+.book-card h3 {
+    margin-top: 0;
+    color: #646cff;
+}
+
+.book-card p {
+    margin: 0.5rem 0;
+    font-size: 0.9em;
+}
+
+.loading {
+    color: #888;
+    font-style: italic;
+}
+
+.top-spacing {
+    margin-top: 1rem;
+}
+
+.error {
+    color: #ff6b6b;
+    padding: 1rem;
+    border: 1px solid #ff6b6b;
+    border-radius: 8px;
+    background-color: rgba(255, 107, 107, 0.1);
+}
+
+.status-margin-top {
+    margin-top: 1rem;
+}
+
+.status-margin-bottom {
+    margin-bottom: 1rem;
+}
+
+.success-message {
+    font-weight: 500;
+    text-align: center;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: 4px;
+    background-color: rgba(76, 175, 80, 0.2);
+    border: 1px solid rgba(76, 175, 80, 0.5);
+    color: #4caf50;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.input-control {
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #646cff;
+    background-color: #1a1a1a;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.input-control--wide {
+    min-width: 220px;
+}
+
+.input-control--xwide {
+    min-width: 320px;
+}
+
+.input-control--full {
+    width: 100%;
+    padding: 0.75rem;
+}
+
+.webhook-registration {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.webhook-registration h2 {
+    font-size: 2em;
+    margin-bottom: 0.5rem;
+}
+
+.webhook-description {
+    color: #aaa;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.webhook-info {
+    margin-top: 2rem;
+    padding: 1rem;
+    border-radius: 4px;
+    background-color: rgba(100, 108, 255, 0.1);
+    border: 1px solid rgba(100, 108, 255, 0.3);
+    font-size: 0.95rem;
+}
+
+.webhook-info h3 {
+    color: #646cff;
+    margin-top: 0;
+    font-size: 1.1rem;
+}
+
+.webhook-info pre {
+    background-color: #0a0a0a;
+    padding: 1rem;
+    border-radius: 4px;
+    overflow: auto;
+    font-size: 0.85rem;
+    text-align: left;
+    color: #aaa;
+    line-height: 1.5;
+}
+
+.webhook-info-note {
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+.webhook-messages {
+    margin-top: 2rem;
+}
+
+.webhook-messages-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.webhook-messages-title {
+    margin: 0;
+}
+
+.webhook-messages-list {
+    margin-top: 1rem;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.error-boundary {
+    max-width: 900px;
+    margin: 2rem auto;
+    text-align: left;
+}
+
+.error-boundary-stack {
+    white-space: pre-wrap;
+    overflow-x: auto;
+}

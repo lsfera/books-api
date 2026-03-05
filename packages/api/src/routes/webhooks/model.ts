@@ -12,11 +12,28 @@ import {
   genericError,
   notFoundError,
 } from '../../model.js'
-import { MongoServerError } from 'mongodb'
 
 type WebHook = t.TypeOf<typeof WebHookCodec>
 
 type TT = InferSchemaType<typeof WebHookSchema>
+
+const isDuplicateKeyError = (error: unknown): boolean => {
+  if (typeof error !== 'object' || error === null) {
+    return false
+  }
+
+  const candidate = error as { code?: unknown; message?: unknown }
+
+  if (candidate.code === 11000) {
+    return true
+  }
+
+  if (typeof candidate.message === 'string') {
+    return candidate.message.includes('E11000')
+  }
+
+  return false
+}
 
 const findWebHooks = (): TE.TaskEither<
   AppError,
@@ -50,10 +67,10 @@ const registerWebHook = (
             updatedAt: now,
           }).save(),
         (e) =>
-          e instanceof MongoServerError && e.code === 11000
+          isDuplicateKeyError(e)
             ? alreadyExistsError(
-                `a webhook for URL '${hook.url}' already exists`,
-              )
+              `a webhook for URL '${hook.url}' already exists`,
+            )
             : genericError(`webhook could not be saved`),
       ),
     TE.map((hook: TT & { _id: Types.ObjectId }) => hook._id),

@@ -1,3 +1,16 @@
 {
-    "debug.javascript.enableNetworkView": false
+    "debug.javascript.enableNetworkView": false,
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    "files.exclude": {
+        "**/node_modules": true,
+        "**/.dist": true,
+        "**/dist": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/.dist": true,
+        "**/dist": true,
+        "**/pnpm-lock.yaml": true
+    }
 }
