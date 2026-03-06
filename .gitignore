@@ -42,8 +42,9 @@ node_modules/
 .yarn/install-state.gz
 .pnp.*
 
-.dist
+.dist/
+dist/
+coverage/
+.vite/
 data
-src/spec.json
-src/spec.html
 .DS_Store
