@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { Cause, Effect, Exit } from 'effect'
 // import { renderHook, waitFor } from '@testing-library/react'
-// import { useEffectResult } from '../src/hooks/useEffect'
+// import { useEffectResult } from '../src/hooks/useQueryEffect'
 
 describe('useEffectResult', () => {
     it('should handle Effect success', async () => {

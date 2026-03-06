@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { Effect } from 'effect'
-import { useEffectResult } from '../hooks/useEffect'
+import { useQueryEffect } from '../hooks/useQueryEffect'
 import { findWebHookMessages, WebHooksApiServiceLive } from '../services/webhooksApi'
 import { formatApiClientError } from '../services/httpErrors'
 
 export default function WebHookMessages() {
     const [refreshToken, setRefreshToken] = useState(0)
 
-    const { data: messages, error, loading } = useEffectResult(
+    const { data: messages, error, loading } = useQueryEffect(
         findWebHookMessages().pipe(
             Effect.provide(WebHooksApiServiceLive),
             Effect.mapError((cause) => formatApiClientError(cause, 'load webhook messages'))

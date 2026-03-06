@@ -1,6 +1,6 @@
 import { Effect } from 'effect'
 import { findBooks, BooksApiServiceLive } from '../services/booksApi'
-import { useEffectResult } from '../hooks/useEffect'
+import { useQueryEffect } from '../hooks/useQueryEffect'
 import type { SearchParams } from './BookSearch'
 import { formatApiClientError } from '../services/httpErrors'
 
@@ -9,7 +9,7 @@ type BookListProps = {
 }
 
 export default function BookList({ searchParams }: BookListProps) {
-    const { data: books, error, loading } = useEffectResult(
+    const { data: books, error, loading } = useQueryEffect(
         findBooks(searchParams).pipe(
             Effect.provide(BooksApiServiceLive),
             Effect.mapError((cause) => formatApiClientError(cause, 'load books'))
