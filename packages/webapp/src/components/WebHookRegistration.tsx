@@ -1,9 +1,11 @@
-import { useActionState, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { registerWebHook, RegisterWebHookRequest } from '../services/webhooksApi'
-import { runClient } from '../services/RuntimeClient'
 import ActionStatus from './ActionStatus'
 import { Effect, ParseResult, Schema } from 'effect'
-import { formatApiClientError } from '../services/apiClient'
+import { formatApiClientError } from '../services/httpErrors'
+import { useActionEffect } from '../hooks/useActionEffect'
+
+type RegistrationError = { message: string; fieldErrors?: Record<string, string> }
 
 interface WebHookRegistrationProps {
     onRegistered?: () => void
@@ -30,50 +32,40 @@ export default function WebHookRegistration({ onRegistered }: WebHookRegistratio
         }
     }
 
-    const [result, action, pending] = useActionState<
-        { status: 'idle' | 'success' | 'error'; message?: string; fieldErrors?: Record<string, string> },
-        globalThis.FormData
-    >(
-        async (_, payload) =>
-            runClient(
-                Effect.gen(function* () {
-                    return yield* decodeRegisterWebHookRequest({
-                        url: payload.get('url')?.toString().trim() ?? ''
-                    }).pipe(
-                        Effect.flatMap((decodedRequest) =>
-                            registerWebHook(decodedRequest).pipe(
-                                Effect.map(() => ({ status: 'success' as const })),
-                                Effect.catchTags({
-                                    NetworkError: (error) => Effect.succeed({ status: 'error' as const, message: formatApiClientError(error, 'register the webhook') }),
-                                    ApiError: (error) => Effect.succeed({ status: 'error' as const, message: formatApiClientError(error, 'register the webhook') }),
-                                    ParseError: (error) => Effect.succeed({ status: 'error' as const, message: formatApiClientError(error, 'register the webhook') })
-                                })
-                            )
-                        ),
-                        Effect.catchTag('ParseError', (error) => {
-                            const validation = toValidationError(error)
-                            return Effect.succeed({
-                                status: 'error' as const,
-                                message: validation.message,
-                                fieldErrors: {
-                                    url: validation.fieldErrors.url
-                                }
-                            })
-                        })
-                    )
-                })
-            ),
-        { status: 'idle' }
+    const [{ error, data }, action, pending] = useActionEffect<globalThis.FormData, { status: 'success' }, RegistrationError>(
+        (payload) =>
+            Effect.gen(function* () {
+                const decodedRequest = yield* decodeRegisterWebHookRequest({
+                    url: payload.get('url')?.toString().trim() ?? ''
+                }).pipe(
+                    Effect.mapError((parseError) => {
+                        const validation = toValidationError(parseError)
+                        return {
+                            message: validation.message,
+                            fieldErrors: {
+                                url: validation.fieldErrors.url
+                            }
+                        }
+                    })
+                )
+
+                return yield* registerWebHook(decodedRequest).pipe(
+                    Effect.as({ status: 'success' as const }),
+                    Effect.mapError((registrationError) => ({
+                        message: formatApiClientError(registrationError, 'register the webhook')
+                    }))
+                )
+            })
     )
 
     useEffect(() => {
-        if (result.status === 'success') {
+        if (data?.status === 'success') {
             setEditedSinceLastSubmit(false)
             onRegistered?.()
         }
-    }, [result.status, onRegistered])
+    }, [data, onRegistered])
 
-    const showInlineErrors = result.status === 'error' && !!result.fieldErrors && !editedSinceLastSubmit
+    const showInlineErrors = !!error?.fieldErrors && !editedSinceLastSubmit
 
     return (
         <div className="webhook-registration">
@@ -97,7 +89,7 @@ export default function WebHookRegistration({ onRegistered }: WebHookRegistratio
                         disabled={pending}
                         className="input-control input-control--full"
                     />
-                    {showInlineErrors && result.fieldErrors?.url && <div className="error">{result.fieldErrors.url}</div>}
+                    {showInlineErrors && error.fieldErrors?.url && <div className="error">{error.fieldErrors.url}</div>}
                 </div>
 
                 <button
@@ -109,12 +101,12 @@ export default function WebHookRegistration({ onRegistered }: WebHookRegistratio
                 </button>
             </form>
 
-            {result.status === 'success' && (
+            {data?.status === 'success' && (
                 <ActionStatus status="success" message="Webhook registered successfully!" />
             )}
 
-            {result.status === 'error' && (
-                <ActionStatus status="error" title="Registration Failed" message={result.message ?? 'Unknown error'} className="status-margin-top" />
+            {error && (
+                <ActionStatus status="error" title="Registration Failed" message={error.message ?? 'Unknown error'} className="status-margin-top" />
             )}
 
             <div className="webhook-info">

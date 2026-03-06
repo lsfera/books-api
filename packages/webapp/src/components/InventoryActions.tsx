@@ -1,14 +1,12 @@
-import { useActionState, useState } from 'react'
+import { useState } from 'react'
 import { Effect, ParseResult, Schema } from 'effect'
 import ActionStatus from './ActionStatus'
-import { formatApiClientError } from '../services/apiClient'
+import { formatApiClientError } from '../services/httpErrors'
 import { PlaceOrderRequest, placeOrder, RecordDeliveryRequest, recordDelivery } from '../services/inventoryApi'
-import { runClient } from '../services/RuntimeClient'
+import { useActionEffect } from '../hooks/useActionEffect'
 
-type ActionResult =
-    | { status: 'idle' }
-    | { status: 'success'; message: string }
-    | { status: 'error'; message: string; fieldErrors?: Record<string, string> }
+type ActionSuccess = { message: string }
+type ActionError = { message: string; fieldErrors?: Record<string, string> }
 
 interface InventoryActionsProps {
     onDataChanged: () => void
@@ -46,80 +44,74 @@ export default function InventoryActions({ onDataChanged }: InventoryActionsProp
     const [orderEditedSinceSubmit, setOrderEditedSinceSubmit] = useState(false)
     const [deliveryEditedSinceSubmit, setDeliveryEditedSinceSubmit] = useState(false)
 
-    const [orderResult, orderAction, orderPending] = useActionState<ActionResult, globalThis.FormData>(
-        async (_, payload) =>
-            runClient(
-                Effect.gen(function* () {
-                    const purchaser = payload.get('purchaser')?.toString().trim() ?? ''
-                    const bookIds = parseBookIds(payload.get('orderBookIds'))
+    const [{ error: orderError, data: orderData }, orderAction, orderPending] = useActionEffect<
+        globalThis.FormData,
+        ActionSuccess,
+        ActionError
+    >(
+        (payload) =>
+            Effect.gen(function* () {
+                const purchaser = payload.get('purchaser')?.toString().trim() ?? ''
+                const bookIds = parseBookIds(payload.get('orderBookIds'))
 
-                    return yield* decodePlaceOrderRequest({ purchaser, bookIds }).pipe(
-                        Effect.flatMap((request) =>
-                            placeOrder(request).pipe(
-                                Effect.map(() => ({ status: 'success' as const, message: 'Order placed successfully!' })),
-                                Effect.tap(() => Effect.sync(() => onDataChanged())),
-                                Effect.catchTags({
-                                    NetworkError: (error) => Effect.succeed({ status: 'error' as const, message: formatApiClientError(error, 'place an order') }),
-                                    ApiError: (error) => Effect.succeed({ status: 'error' as const, message: formatApiClientError(error, 'place an order') }),
-                                    ParseError: (error) => Effect.succeed({ status: 'error' as const, message: formatApiClientError(error, 'place an order') })
-                                })
-                            )
-                        ),
-                        Effect.catchTag('ParseError', (error) => {
-                            const validation = toValidationError(error)
-                            return Effect.succeed({
-                                status: 'error' as const,
-                                message: validation.message,
-                                fieldErrors: {
-                                    purchaser: validation.fieldErrors.purchaser,
-                                    orderBookIds: validation.fieldErrors.bookIds
-                                }
-                            })
-                        })
-                    )
-                })
-            ),
-        { status: 'idle' }
+                const request = yield* decodePlaceOrderRequest({ purchaser, bookIds }).pipe(
+                    Effect.mapError((parseError) => {
+                        const validation = toValidationError(parseError)
+                        return {
+                            message: validation.message,
+                            fieldErrors: {
+                                purchaser: validation.fieldErrors.purchaser,
+                                orderBookIds: validation.fieldErrors.bookIds
+                            }
+                        }
+                    })
+                )
+
+                return yield* placeOrder(request).pipe(
+                    Effect.tap(() => Effect.sync(() => onDataChanged())),
+                    Effect.as({ message: 'Order placed successfully!' }),
+                    Effect.mapError((placeOrderError) => ({
+                        message: formatApiClientError(placeOrderError, 'place an order')
+                    }))
+                )
+            })
     )
 
-    const [deliveryResult, deliveryAction, deliveryPending] = useActionState<ActionResult, globalThis.FormData>(
-        async (_, payload) =>
-            runClient(
-                Effect.gen(function* () {
-                    const supplier = payload.get('supplier')?.toString().trim() ?? ''
-                    const bookIds = parseBookIds(payload.get('deliveryBookIds'))
+    const [{ error: deliveryError, data: deliveryData }, deliveryAction, deliveryPending] = useActionEffect<
+        globalThis.FormData,
+        ActionSuccess,
+        ActionError
+    >(
+        (payload) =>
+            Effect.gen(function* () {
+                const supplier = payload.get('supplier')?.toString().trim() ?? ''
+                const bookIds = parseBookIds(payload.get('deliveryBookIds'))
 
-                    return yield* decodeRecordDeliveryRequest({ supplier, bookIds }).pipe(
-                        Effect.flatMap((request) =>
-                            recordDelivery(request).pipe(
-                                Effect.map(() => ({ status: 'success' as const, message: 'Delivery recorded successfully!' })),
-                                Effect.tap(() => Effect.sync(() => onDataChanged())),
-                                Effect.catchTags({
-                                    NetworkError: (error) => Effect.succeed({ status: 'error' as const, message: formatApiClientError(error, 'record a delivery') }),
-                                    ApiError: (error) => Effect.succeed({ status: 'error' as const, message: formatApiClientError(error, 'record a delivery') }),
-                                    ParseError: (error) => Effect.succeed({ status: 'error' as const, message: formatApiClientError(error, 'record a delivery') })
-                                })
-                            )
-                        ),
-                        Effect.catchTag('ParseError', (error) => {
-                            const validation = toValidationError(error)
-                            return Effect.succeed({
-                                status: 'error' as const,
-                                message: validation.message,
-                                fieldErrors: {
-                                    supplier: validation.fieldErrors.supplier,
-                                    deliveryBookIds: validation.fieldErrors.bookIds
-                                }
-                            })
-                        })
-                    )
-                })
-            ),
-        { status: 'idle' }
+                const request = yield* decodeRecordDeliveryRequest({ supplier, bookIds }).pipe(
+                    Effect.mapError((parseError) => {
+                        const validation = toValidationError(parseError)
+                        return {
+                            message: validation.message,
+                            fieldErrors: {
+                                supplier: validation.fieldErrors.supplier,
+                                deliveryBookIds: validation.fieldErrors.bookIds
+                            }
+                        }
+                    })
+                )
+
+                return yield* recordDelivery(request).pipe(
+                    Effect.tap(() => Effect.sync(() => onDataChanged())),
+                    Effect.as({ message: 'Delivery recorded successfully!' }),
+                    Effect.mapError((recordDeliveryError) => ({
+                        message: formatApiClientError(recordDeliveryError, 'record a delivery')
+                    }))
+                )
+            })
     )
 
-    const showOrderInlineErrors = orderResult.status === 'error' && !!orderResult.fieldErrors && !orderEditedSinceSubmit
-    const showDeliveryInlineErrors = deliveryResult.status === 'error' && !!deliveryResult.fieldErrors && !deliveryEditedSinceSubmit
+    const showOrderInlineErrors = !!orderError?.fieldErrors && !orderEditedSinceSubmit
+    const showDeliveryInlineErrors = !!deliveryError?.fieldErrors && !deliveryEditedSinceSubmit
 
     return (
         <>
@@ -139,7 +131,7 @@ export default function InventoryActions({ onDataChanged }: InventoryActionsProp
                         disabled={orderPending}
                         className="input-control"
                     />
-                    {showOrderInlineErrors && orderResult.fieldErrors?.purchaser && <div className="error">{orderResult.fieldErrors.purchaser}</div>}
+                    {showOrderInlineErrors && orderError.fieldErrors?.purchaser && <div className="error">{orderError.fieldErrors.purchaser}</div>}
                     <input
                         name="orderBookIds"
                         type="text"
@@ -148,11 +140,11 @@ export default function InventoryActions({ onDataChanged }: InventoryActionsProp
                         disabled={orderPending}
                         className="input-control input-control--xwide"
                     />
-                    {showOrderInlineErrors && orderResult.fieldErrors?.orderBookIds && <div className="error">{orderResult.fieldErrors.orderBookIds}</div>}
+                    {showOrderInlineErrors && orderError.fieldErrors?.orderBookIds && <div className="error">{orderError.fieldErrors.orderBookIds}</div>}
                     <button type="submit" disabled={orderPending}>{orderPending ? 'Placing...' : 'Place Order'}</button>
                 </div>
-                {orderResult.status === 'success' && <ActionStatus status="success" message={orderResult.message} />}
-                {orderResult.status === 'error' && <ActionStatus status="error" title="Order Failed" message={orderResult.message} className="status-margin-top" />}
+                {orderData && <ActionStatus status="success" message={orderData.message} />}
+                {orderError && <ActionStatus status="error" title="Order Failed" message={orderError.message} className="status-margin-top" />}
             </form>
 
             <form
@@ -171,7 +163,7 @@ export default function InventoryActions({ onDataChanged }: InventoryActionsProp
                         disabled={deliveryPending}
                         className="input-control"
                     />
-                    {showDeliveryInlineErrors && deliveryResult.fieldErrors?.supplier && <div className="error">{deliveryResult.fieldErrors.supplier}</div>}
+                    {showDeliveryInlineErrors && deliveryError.fieldErrors?.supplier && <div className="error">{deliveryError.fieldErrors.supplier}</div>}
                     <input
                         name="deliveryBookIds"
                         type="text"
@@ -180,11 +172,11 @@ export default function InventoryActions({ onDataChanged }: InventoryActionsProp
                         disabled={deliveryPending}
                         className="input-control input-control--xwide"
                     />
-                    {showDeliveryInlineErrors && deliveryResult.fieldErrors?.deliveryBookIds && <div className="error">{deliveryResult.fieldErrors.deliveryBookIds}</div>}
+                    {showDeliveryInlineErrors && deliveryError.fieldErrors?.deliveryBookIds && <div className="error">{deliveryError.fieldErrors.deliveryBookIds}</div>}
                     <button type="submit" disabled={deliveryPending}>{deliveryPending ? 'Recording...' : 'Record Delivery'}</button>
                 </div>
-                {deliveryResult.status === 'success' && <ActionStatus status="success" message={deliveryResult.message} />}
-                {deliveryResult.status === 'error' && <ActionStatus status="error" title="Delivery Failed" message={deliveryResult.message} className="status-margin-top" />}
+                {deliveryData && <ActionStatus status="success" message={deliveryData.message} />}
+                {deliveryError && <ActionStatus status="error" title="Delivery Failed" message={deliveryError.message} className="status-margin-top" />}
             </form>
         </>
     )

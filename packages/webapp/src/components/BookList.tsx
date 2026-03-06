@@ -2,7 +2,7 @@ import { Effect } from 'effect'
 import { findBooks, BooksApiServiceLive } from '../services/booksApi'
 import { useEffectResult } from '../hooks/useEffect'
 import type { SearchParams } from './BookSearch'
-import { formatApiClientError } from '../services/apiClient'
+import { formatApiClientError } from '../services/httpErrors'
 
 type BookListProps = {
     searchParams: SearchParams

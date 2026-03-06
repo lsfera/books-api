@@ -6,7 +6,8 @@ import {
 } from '@effect/platform'
 import { Effect, Option } from 'effect'
 import { Schema } from 'effect'
-import { ApiError, mapHttpClientError, NetworkError, ParseError, makeApiClient } from './apiClient'
+import { makeJsonHttpClient } from './httpClient'
+import { ApiError, mapHttpClientError, NetworkError, ParseError } from './httpErrors'
 
 // Book schema matching the API
 export const BookCondition = Schema.Literal('used', 'new', 'like new', 'good')
@@ -41,25 +42,11 @@ const getPathFromLocation = (location: string): string => {
         : location
 }
 
-const toClientPath = (location: string): string => {
-    const path = getPathFromLocation(location)
-
-    if (path.startsWith('/api')) {
-        return path.replace(/^\/api/, '') || '/'
-    }
-
-    if (path.startsWith('/')) {
-        return path
-    }
-
-    return `/${path}`
-}
-
 export class BooksApiService extends Effect.Service<BooksApiService>()('BooksApiService', {
     accessors: true,
     dependencies: [FetchHttpClient.layer],
     effect: Effect.gen(function* () {
-        const client = yield* makeApiClient('/api')
+        const client = yield* makeJsonHttpClient()
 
         const findBooks = Effect.fn('BooksApiService.findBooks')(function* (params: {
             title?: string
@@ -118,7 +105,7 @@ export class BooksApiService extends Effect.Service<BooksApiService>()('BooksApi
             }
 
             return yield* client
-                .get(toClientPath(locationPath))
+                .get(getPathFromLocation(locationPath))
                 .pipe(
                     Effect.flatMap(HttpClientResponse.filterStatusOk),
                     Effect.flatMap(HttpClientResponse.schemaBodyJson(Book)),

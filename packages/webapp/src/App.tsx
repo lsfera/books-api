@@ -7,7 +7,7 @@ import InventoryActions from './components/InventoryActions'
 import WebHookMessages from './components/WebHookMessages'
 import ActionStatus from './components/ActionStatus'
 import { registerWebHook } from './services/webhooksApi'
-import { runClient } from './services/RuntimeClient'
+import { runClient } from './custom-runtime'
 
 type AutoWebhookStatus = 'idle' | 'registered' | 'error'
 

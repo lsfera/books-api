@@ -5,7 +5,8 @@ import {
 } from '@effect/platform'
 import { Effect } from 'effect'
 import { Schema } from 'effect'
-import { ApiError, mapHttpClientError, makeApiClient, NetworkError, ParseError } from './apiClient'
+import { makeJsonHttpClient } from './httpClient'
+import { ApiError, mapHttpClientError, NetworkError, ParseError } from './httpErrors'
 
 // Webhook schema
 export const WebHook = Schema.Struct({
@@ -45,7 +46,7 @@ export class WebHooksApiService extends Effect.Service<WebHooksApiService>()('We
     accessors: true,
     dependencies: [FetchHttpClient.layer],
     effect: Effect.gen(function* () {
-        const client = yield* makeApiClient('/api')
+        const client = yield* makeJsonHttpClient('/api')
 
         const registerWebHook = Effect.fn('WebHooksApiService.registerWebHook')(function* (request: RegisterWebHookRequest) {
             return yield* client

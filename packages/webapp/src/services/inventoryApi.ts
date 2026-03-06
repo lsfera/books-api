@@ -5,7 +5,8 @@ import {
 } from '@effect/platform'
 import { Effect } from 'effect'
 import { Schema } from 'effect'
-import { ApiError, mapHttpClientError, makeApiClient, NetworkError, ParseError } from './apiClient'
+import { makeJsonHttpClient } from './httpClient'
+import { ApiError, mapHttpClientError, NetworkError, ParseError } from './httpErrors'
 
 export const PlaceOrderRequest = Schema.Struct({
     purchaser: Schema.String.pipe(Schema.trimmed(), Schema.minLength(1)),
@@ -25,7 +26,7 @@ export class InventoryApiService extends Effect.Service<InventoryApiService>()('
     accessors: true,
     dependencies: [FetchHttpClient.layer],
     effect: Effect.gen(function* () {
-        const client = yield* makeApiClient('/api')
+        const client = yield* makeJsonHttpClient('/api')
 
         const placeOrder = Effect.fn('InventoryApiService.placeOrder')(function* (request: PlaceOrderRequest) {
             return yield* client

@@ -1,14 +1,16 @@
-import { useActionState, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Effect, ParseResult, Schema } from 'effect'
 import { CreateBookRequest, saveBook } from '../services/booksApi'
-import { runClient } from '../services/RuntimeClient'
 import ActionStatus from './ActionStatus'
-import { formatApiClientError } from '../services/apiClient'
+import { formatApiClientError } from '../services/httpErrors'
+import { useActionEffect } from '../hooks/useActionEffect'
 
-type SaveResult =
-    | { status: 'idle' }
-    | { status: 'success' }
-    | { status: 'error'; message: string; fieldErrors?: Partial<Record<'title' | 'isbn' | 'conditions' | 'authors' | 'categories', string>> }
+type SaveSuccess = { status: 'success' }
+
+type SaveError = {
+    message: string
+    fieldErrors?: Partial<Record<'title' | 'isbn' | 'conditions' | 'authors' | 'categories', string>>
+}
 
 interface BookCreateFormProps {
     onDataChanged: () => void
@@ -64,56 +66,49 @@ export default function BookCreateForm({ onDataChanged }: BookCreateFormProps) {
     const [formValues, setFormValues] = useState<BookFormValues>(INITIAL_FORM_VALUES)
     const [editedSinceLastSubmit, setEditedSinceLastSubmit] = useState(false)
 
-    const [result, action, pending] = useActionState<SaveResult, globalThis.FormData>(
-        async (_, payload) =>
-            runClient(
-                Effect.gen(function* () {
-                    const title = payload.get('title')?.toString().trim() ?? ''
-                    const isbn = payload.get('isbn')?.toString().trim() ?? ''
-                    const conditions = payload.get('conditions')?.toString().trim() ?? ''
-                    const authors = parseCsv(payload.get('authors'))
-                    const categories = parseCsv(payload.get('categories'))
+    const [{ error, data }, action, pending] = useActionEffect<globalThis.FormData, SaveSuccess, SaveError>(
+        (payload) =>
+            Effect.gen(function* () {
+                const title = payload.get('title')?.toString().trim() ?? ''
+                const isbn = payload.get('isbn')?.toString().trim() ?? ''
+                const conditions = payload.get('conditions')?.toString().trim() ?? ''
+                const authors = parseCsv(payload.get('authors'))
+                const categories = parseCsv(payload.get('categories'))
 
-                    return yield* decodeCreateBookRequest({
-                        title,
-                        isbn,
-                        conditions,
-                        authors,
-                        categories
-                    }).pipe(
-                        Effect.flatMap((decodedBook) =>
-                            saveBook(decodedBook).pipe(
-                                Effect.map(() => ({ status: 'success' as const })),
-                                Effect.catchTags({
-                                    NetworkError: (error) => Effect.succeed({ status: 'error' as const, message: formatApiClientError(error, 'save the book') }),
-                                    ApiError: (error) => Effect.succeed({ status: 'error' as const, message: formatApiClientError(error, 'save the book') }),
-                                    ParseError: (error) => Effect.succeed({ status: 'error' as const, message: formatApiClientError(error, 'save the book') })
-                                })
-                            )
-                        ),
-                        Effect.catchTag('ParseError', (error) => {
-                            const validation = toValidationError(error)
-                            return Effect.succeed({
-                                status: 'error' as const,
-                                message: validation.message,
-                                fieldErrors: validation.fieldErrors
-                            })
-                        })
-                    )
-                })
-            ),
-        { status: 'idle' }
+                const decodedBook = yield* decodeCreateBookRequest({
+                    title,
+                    isbn,
+                    conditions,
+                    authors,
+                    categories
+                }).pipe(
+                    Effect.mapError((parseError) => {
+                        const validation = toValidationError(parseError)
+                        return {
+                            message: validation.message,
+                            fieldErrors: validation.fieldErrors
+                        }
+                    })
+                )
+
+                return yield* saveBook(decodedBook).pipe(
+                    Effect.as({ status: 'success' as const }),
+                    Effect.mapError((saveError) => ({
+                        message: formatApiClientError(saveError, 'save the book')
+                    }))
+                )
+            })
     )
 
     useEffect(() => {
-        if (result.status === 'success') {
+        if (data?.status === 'success') {
             setFormValues(INITIAL_FORM_VALUES)
             setEditedSinceLastSubmit(false)
             onDataChanged()
         }
-    }, [result.status, onDataChanged])
+    }, [data, onDataChanged])
 
-    const showInlineErrors = result.status === 'error' && !!result.fieldErrors && !editedSinceLastSubmit
+    const showInlineErrors = !!error?.fieldErrors && !editedSinceLastSubmit
 
     return (
         <form
@@ -135,7 +130,7 @@ export default function BookCreateForm({ onDataChanged }: BookCreateFormProps) {
                         setFormValues((previous) => ({ ...previous, title: event.target.value }))
                     }}
                     className="input-control" />
-                {showInlineErrors && result.fieldErrors?.title && <div className="error">{result.fieldErrors.title}</div>}
+                {showInlineErrors && error.fieldErrors?.title && <div className="error">{error.fieldErrors.title}</div>}
                 <input
                     name="isbn"
                     type="text"
@@ -148,7 +143,7 @@ export default function BookCreateForm({ onDataChanged }: BookCreateFormProps) {
                         setFormValues((previous) => ({ ...previous, isbn: event.target.value }))
                     }}
                     className="input-control" />
-                {showInlineErrors && result.fieldErrors?.isbn && <div className="error">{result.fieldErrors.isbn}</div>}
+                {showInlineErrors && error.fieldErrors?.isbn && <div className="error">{error.fieldErrors.isbn}</div>}
                 <select
                     name="conditions"
                     required
@@ -165,7 +160,7 @@ export default function BookCreateForm({ onDataChanged }: BookCreateFormProps) {
                     <option value="like new">like new</option>
                     <option value="good">good</option>
                 </select>
-                {showInlineErrors && result.fieldErrors?.conditions && <div className="error">{result.fieldErrors.conditions}</div>}
+                {showInlineErrors && error.fieldErrors?.conditions && <div className="error">{error.fieldErrors.conditions}</div>}
                 <input
                     name="authors"
                     type="text"
@@ -178,7 +173,7 @@ export default function BookCreateForm({ onDataChanged }: BookCreateFormProps) {
                         setFormValues((previous) => ({ ...previous, authors: event.target.value }))
                     }}
                     className="input-control input-control--wide" />
-                {showInlineErrors && result.fieldErrors?.authors && <div className="error">{result.fieldErrors.authors}</div>}
+                {showInlineErrors && error.fieldErrors?.authors && <div className="error">{error.fieldErrors.authors}</div>}
                 <input
                     name="categories"
                     type="text"
@@ -191,16 +186,16 @@ export default function BookCreateForm({ onDataChanged }: BookCreateFormProps) {
                         setFormValues((previous) => ({ ...previous, categories: event.target.value }))
                     }}
                     className="input-control input-control--wide" />
-                {showInlineErrors && result.fieldErrors?.categories && <div className="error">{result.fieldErrors.categories}</div>}
+                {showInlineErrors && error.fieldErrors?.categories && <div className="error">{error.fieldErrors.categories}</div>}
                 <button type="submit" disabled={pending}>{pending ? 'Saving...' : 'Save Book'}</button>
             </div>
 
-            {result.status === 'success' && (
+            {data?.status === 'success' && (
                 <ActionStatus status="success" message="Book saved successfully!" />
             )}
 
-            {result.status === 'error' && (
-                <ActionStatus status="error" title="Save Failed" message={result.message} className="status-margin-top" />
+            {error && (
+                <ActionStatus status="error" title="Save Failed" message={error.message} className="status-margin-top" />
             )}
         </form>
     )

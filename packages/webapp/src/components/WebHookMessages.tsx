@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Effect } from 'effect'
 import { useEffectResult } from '../hooks/useEffect'
 import { findWebHookMessages, WebHooksApiServiceLive } from '../services/webhooksApi'
-import { formatApiClientError } from '../services/apiClient'
+import { formatApiClientError } from '../services/httpErrors'
 
 export default function WebHookMessages() {
     const [refreshToken, setRefreshToken] = useState(0)

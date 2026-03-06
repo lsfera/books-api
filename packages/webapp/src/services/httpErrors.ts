@@ -1,8 +1,3 @@
-import {
-    HttpClient,
-    HttpClientRequest
-} from '@effect/platform'
-import { Effect, flow } from 'effect'
 import { Schema } from 'effect'
 
 export class NetworkError extends Schema.TaggedError<NetworkError>()('NetworkError', {
@@ -75,16 +70,3 @@ export const mapHttpClientError = (error: unknown): ApiClientError => {
 
     return new ParseError({ message: String(error) })
 }
-
-export const makeApiClient = (prefix = '/api') =>
-    Effect.gen(function* () {
-        const baseClient = yield* HttpClient.HttpClient
-        return baseClient.pipe(
-            HttpClient.mapRequest(
-                flow(
-                    HttpClientRequest.prependUrl(prefix),
-                    HttpClientRequest.acceptJson
-                )
-            )
-        )
-    })

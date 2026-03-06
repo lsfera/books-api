@@ -1,7 +1,7 @@
 import { Schema, Effect } from 'effect'
-import { useActionState, useEffect } from 'react'
-import { runClient } from '../services/RuntimeClient'
+import { useEffect, useRef } from 'react'
 import ActionStatus from './ActionStatus'
+import { useActionEffect } from '../hooks/useActionEffect'
 
 export const SearchParams = Schema.Struct({
     title: Schema.optional(Schema.String),
@@ -21,34 +21,35 @@ interface BookSearchProps {
 }
 
 export default function BookSearch({ onSearch }: BookSearchProps) {
-    const [result, action, pending] = useActionState<
-        { status: 'idle' | 'submitted'; params: SearchParams; submitId: number },
-        globalThis.FormData
-    >(
-        async (previous, payload) =>
-            runClient(
-                Effect.sync(() => {
-                    const params = {
-                        title: normalize(payload.get('title')),
-                        author: normalize(payload.get('author')),
-                        isbn: normalize(payload.get('isbn'))
-                    }
+    const submitCounter = useRef(0)
 
-                    return {
-                        status: 'submitted' as const,
-                        params,
-                        submitId: previous.submitId + 1
-                    }
-                })
-            ),
-        { status: 'idle', params: {}, submitId: 0 }
+    const [{ data }, action, pending] = useActionEffect<
+        globalThis.FormData,
+        { params: SearchParams; submitId: number },
+        never
+    >(
+        (payload) =>
+            Effect.sync(() => {
+                const params = {
+                    title: normalize(payload.get('title')),
+                    author: normalize(payload.get('author')),
+                    isbn: normalize(payload.get('isbn'))
+                }
+
+                submitCounter.current += 1
+
+                return {
+                    params,
+                    submitId: submitCounter.current
+                }
+            })
     )
 
     useEffect(() => {
-        if (result.status === 'submitted' && result.submitId > 0) {
-            onSearch(result.params)
+        if (data && data.submitId > 0) {
+            onSearch(data.params)
         }
-    }, [result.status, result.submitId, result.params, onSearch])
+    }, [data, onSearch])
 
     return (
         <form action={action} className="form-section">
@@ -78,7 +79,7 @@ export default function BookSearch({ onSearch }: BookSearchProps) {
                 <button type="submit" disabled={pending}>{pending ? 'Searching...' : 'Search'}</button>
             </div>
 
-            {result.status === 'submitted' && (
+            {data && (
                 <ActionStatus
                     status="success"
                     message="Filters updated."
