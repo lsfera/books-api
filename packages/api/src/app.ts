@@ -20,6 +20,7 @@ import { openApiSpecHttpHandler } from './routes/openapi/index.js'
 import {
   getWebHookMessagesHttpHandler,
   saveWebHookMessageHttpHandler,
+  streamWebHookMessagesHttpHandler,
 } from './routes/webhook-messages/index.js'
 
 const buildApp = async (cfg: Config): Promise<core.Express> => {
@@ -40,6 +41,7 @@ const buildApp = async (cfg: Config): Promise<core.Express> => {
   app.get('/books/:bookId', getBookHttpHandler)
   app.get('/books/:bookId/availability', bookAvailabilityHttpHandler)
   app.get('/webhook-messages', getWebHookMessagesHttpHandler)
+  app.get('/webhook-messages/stream', streamWebHookMessagesHttpHandler)
   app.get('/openapi.json', openApiSpecHttpHandler)
   app.post('/books', addBookHttpHandler())
   app.post('/orders', placeOrderHttpHandler())

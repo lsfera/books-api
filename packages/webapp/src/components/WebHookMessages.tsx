@@ -1,27 +1,57 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Effect } from 'effect'
 import { useQueryEffect } from '../hooks/useQueryEffect'
-import { findWebHookMessages, WebHooksApiServiceLive } from '../services/webhooksApi'
+import {
+    findWebHookMessages,
+    WebHookMessage,
+    WebHooksApiServiceLive,
+} from '../services/webhooksApi'
 import { formatApiClientError } from '../services/httpErrors'
 
 export default function WebHookMessages() {
-    const [refreshToken, setRefreshToken] = useState(0)
+    const [messages, setMessages] = useState<Array<WebHookMessage>>([])
+    const [streamError, setStreamError] = useState<string | null>(null)
 
-    const { data: messages, error, loading } = useQueryEffect(
+    const { data: initialMessages, error, loading } = useQueryEffect(
         findWebHookMessages().pipe(
             Effect.provide(WebHooksApiServiceLive),
             Effect.mapError((cause) => formatApiClientError(cause, 'load webhook messages'))
         ),
-        [refreshToken]
+        []
     )
+
+    useEffect(() => {
+        if (initialMessages) {
+            setMessages([...initialMessages])
+        }
+    }, [initialMessages])
+
+    useEffect(() => {
+        const source = new EventSource('/api/webhook-messages/stream')
+
+        source.onmessage = (event) => {
+            try {
+                const parsed = JSON.parse(event.data) as WebHookMessage
+                setMessages((current) => [parsed, ...current].slice(0, 100))
+                setStreamError(null)
+            } catch {
+                setStreamError('Could not parse incoming webhook stream message.')
+            }
+        }
+
+        source.onerror = () => {
+            setStreamError('Live updates are temporarily unavailable. Retrying...')
+        }
+
+        return () => {
+            source.close()
+        }
+    }, [])
 
     return (
         <div className="webhook-messages">
             <div className="webhook-messages-header">
                 <h2 className="webhook-messages-title">Webhook Messages</h2>
-                <button onClick={() => setRefreshToken((value) => value + 1)} disabled={loading}>
-                    {loading ? 'Refreshing...' : 'Refresh'}
-                </button>
             </div>
 
             {loading && <div className="loading top-spacing">Loading messages...</div>}
@@ -33,11 +63,13 @@ export default function WebHookMessages() {
                 </div>
             )}
 
-            {!loading && !error && (!messages || messages.length === 0) && (
+            {!error && streamError && <div className="top-spacing">{streamError}</div>}
+
+            {!loading && !error && messages.length === 0 && (
                 <div className="top-spacing">No webhook messages received yet.</div>
             )}
 
-            {!loading && !error && messages && messages.length > 0 && (
+            {!loading && !error && messages.length > 0 && (
                 <div className="webhook-messages-list">
                     {messages.map((message, index) => (
                         <div key={`${message.receivedAt}-${index}`} className="book-card">

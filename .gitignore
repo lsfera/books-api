@@ -48,3 +48,7 @@ coverage/
 .vite/
 data
 .DS_Store
+
+# Generated API documentation artifacts
+packages/api/src/spec.json
+packages/api/src/spec.html

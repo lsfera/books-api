@@ -292,12 +292,30 @@ When a book goes out of stock, your webhook receives:
 
 ```json
 {
-  "type": "book_out_of_stock",
+  "type": "out_of_stock",
   "book": {
     "id": "507f1f77bcf86cd799439011",
     "url": "http://localhost:3001/books/507f1f77bcf86cd799439011"
   }
 }
+```
+
+### Webhook Message Stream (SSE)
+
+The API also exposes a live Server-Sent Events stream for newly received webhook messages.
+
+**Endpoint:** `GET /api/webhook-messages/stream`
+
+**Example:**
+
+```bash
+curl -N http://localhost:8080/api/webhook-messages/stream
+```
+
+Expected event format:
+
+```text
+data: {"type":"out_of_stock","book":{"id":"507f1f77bcf86cd799439011","url":"http://localhost:3001/books/507f1f77bcf86cd799439011"},"receivedAt":"2026-03-08T10:00:00.000Z"}
 ```
 
 ### Testing Webhooks

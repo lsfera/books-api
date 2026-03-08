@@ -9,20 +9,27 @@ type StoredWebHookMessage = WebHookMessage & {
     receivedAt: string
 }
 
+type MessageListener = (message: StoredWebHookMessage) => void
+
 const messages: Array<StoredWebHookMessage> = []
+const listeners = new Set<MessageListener>()
 
 const saveWebHookMessage = (
     message: WebHookMessage,
 ): TE.TaskEither<AppError, void> =>
     TE.fromIO(() => {
-        messages.unshift({
+        const storedMessage = {
             ...message,
             receivedAt: new Date().toISOString(),
-        })
+        }
+
+        messages.unshift(storedMessage)
 
         if (messages.length > 100) {
             messages.length = 100
         }
+
+        listeners.forEach((listener) => listener(storedMessage))
     })
 
 const findWebHookMessages = (): TE.TaskEither<
@@ -30,4 +37,19 @@ const findWebHookMessages = (): TE.TaskEither<
     Array<StoredWebHookMessage>
 > => TE.right([...messages])
 
-export { WebHookMessage, StoredWebHookMessage, saveWebHookMessage, findWebHookMessages }
+const subscribeToWebHookMessages = (
+    listener: MessageListener,
+): (() => void) => {
+    listeners.add(listener)
+    return () => {
+        listeners.delete(listener)
+    }
+}
+
+export {
+    WebHookMessage,
+    StoredWebHookMessage,
+    saveWebHookMessage,
+    findWebHookMessages,
+    subscribeToWebHookMessages,
+}

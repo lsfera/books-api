@@ -324,6 +324,26 @@ const requiredOperationDocs: Record<
       },
     },
   },
+  '/webhook-messages/stream': {
+    get: {
+      summary: 'Stream webhook notification messages.',
+      description:
+        'Streams newly received webhook notification payloads using Server-Sent Events (SSE).',
+      operationId: 'stream_webhook_messages',
+      responses: {
+        200: {
+          description: 'SSE stream opened',
+          content: {
+            'text/event-stream': {
+              schema: {
+                type: 'string',
+              },
+            },
+          },
+        },
+      },
+    },
+  },
 }
 
 const mergeMissingOperationDocs = async (): Promise<void> => {
