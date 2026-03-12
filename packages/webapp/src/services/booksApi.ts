@@ -8,6 +8,7 @@ import { Effect, Option } from 'effect'
 import { Schema } from 'effect'
 import { makeJsonHttpClient } from './httpClient'
 import { ApiError, mapHttpClientError, NetworkError, ParseError } from './httpErrors'
+import { SearchParams } from '../components/BookSearch'
 
 // Book schema matching the API
 export const BookCondition = Schema.Literal('used', 'new', 'like new', 'good')
@@ -48,15 +49,12 @@ export class BooksApiService extends Effect.Service<BooksApiService>()('BooksApi
     effect: Effect.gen(function* () {
         const client = yield* makeJsonHttpClient()
 
-        const findBooks = Effect.fn('BooksApiService.findBooks')(function* (params: {
-            title?: string
-            author?: string
-            isbn?: string
-        } = {}) {
+        const findBooks = Effect.fn('BooksApiService.findBooks')(function* (params: SearchParams) {
             const queryParams = new URLSearchParams()
-            if (params.title) queryParams.set('title', params.title)
-            if (params.author) queryParams.set('author', params.author)
-            if (params.isbn) queryParams.set('isbn', params.isbn)
+            for (const [key, value] of Object.entries(params)) {
+                Option.map(value, (v) => queryParams.set(key, v))
+            }
+
 
             const path = `/books${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
 

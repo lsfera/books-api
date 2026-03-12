@@ -4,17 +4,12 @@ import ActionStatus from './ActionStatus'
 import { useActionEffect } from '../hooks/useActionEffect'
 
 export const SearchParams = Schema.Struct({
-    title: Schema.optional(Schema.String),
-    author: Schema.optional(Schema.String),
-    isbn: Schema.optional(Schema.String)
+    title: Schema.OptionFromNonEmptyTrimmedString,
+    author: Schema.OptionFromNonEmptyTrimmedString,
+    isbn: Schema.OptionFromNonEmptyTrimmedString
 })
 
 export type SearchParams = typeof SearchParams.Type
-
-const normalize = (value: FormDataEntryValue | null): string | undefined => {
-    const stringValue = value?.toString().trim() ?? ''
-    return stringValue.length > 0 ? stringValue : undefined
-}
 
 interface BookSearchProps {
     onSearch: (params: SearchParams) => void
@@ -30,12 +25,11 @@ export default function BookSearch({ onSearch }: BookSearchProps) {
     >(
         (payload) =>
             Effect.sync(() => {
-                const params = {
-                    title: normalize(payload.get('title')),
-                    author: normalize(payload.get('author')),
-                    isbn: normalize(payload.get('isbn'))
-                }
-
+                const params = Schema.decodeUnknownSync(SearchParams)({
+                    title: payload.get('title'),
+                    author: payload.get('author'),
+                    isbn: payload.get('isbn')
+                })
                 submitCounter.current += 1
 
                 return {
